@@ -3,6 +3,12 @@ import { internal } from './_generated/api';
 
 const crons = cronJobs();
 
-crons.interval('fetch latest GNews headlines', { minutes: 10 }, internal.gnews.getLatestHeadlines);
+if (process.env.RUN_GNEWS_CRON === 'true') {
+	crons.interval(
+		'fetch latest GNews headlines',
+		{ seconds: 100 },
+		internal.gnews.getLatestHeadlines
+	);
+}
 
 export default crons;

@@ -31,9 +31,11 @@ export const getLatestHeadlines = internalAction({
 
 			const res = await fetch(url);
 
-			if (res.status === 429) {
+			if (res.status === 429 || res.status === 403) {
 				const body = await res.text();
-				console.warn(`GNews rate limit reached while fetching ${category.name}: ${body}`);
+				console.warn(
+					`Rate limited or access denied when fetching headlines for category ${category.name}: ${res.status} ${res.statusText} ${body}`
+				);
 				return;
 			}
 
