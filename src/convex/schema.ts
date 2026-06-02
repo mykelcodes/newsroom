@@ -38,6 +38,11 @@ export default defineSchema({
 		name: v.string(),
 		code: v.string()
 	}).index('by_code', ['code']),
+	gnewsFetchStates: defineTable({
+		source: v.string(),
+		lastCategoryCode: v.string(),
+		lastFetchedAt: v.number()
+	}).index('by_source', ['source']),
 	headlines: newsArticle,
 	articles: newsArticle
 });
