@@ -56,7 +56,9 @@ export default defineSchema({
 			v.literal('failed')
 		),
 		error: v.nullable(v.string()),
-		fetchedAt: v.nullable(v.number())
+		fetchedAt: v.nullable(v.number()),
+		dataLength: v.optional(v.number()),
+		fetchedPage: v.optional(v.number())
 	})
 		.index('by_status', ['status'])
 		.index('by_categoryId_and_status', ['categoryId', 'status'])

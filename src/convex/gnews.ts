@@ -59,7 +59,11 @@ export const getLatestHeadlines = internalAction({
 					nextFetchAt: res.status === 403 ? nextDayMidnight() : now + 60 * 60 * 1000,
 					lastFetchedPage: category.lastFetchedPage // Don't advance page number on rate limit
 				});
-				await ctx.runMutation(internal.fetchJobs.markCompleted, { id: args.jobId });
+				await ctx.runMutation(internal.fetchJobs.markCompleted, {
+					id: args.jobId,
+					dataLength: 0,
+					fetchedPage: category.lastFetchedPage
+				});
 				return;
 			}
 
@@ -97,7 +101,11 @@ export const getLatestHeadlines = internalAction({
 				lastFetchedPage: nextPage
 			});
 
-			await ctx.runMutation(internal.fetchJobs.markCompleted, { id: args.jobId });
+			await ctx.runMutation(internal.fetchJobs.markCompleted, {
+				id: args.jobId,
+				dataLength: data.articles.length,
+				fetchedPage: nextPage
+			});
 		} catch (error) {
 			console.error(`Error fetching headlines for category ${categoryName}:`, error);
 			await ctx.runMutation(internal.fetchJobs.markFailed, {

@@ -16,12 +16,16 @@ export const markInProgress = internalMutation({
 
 export const markCompleted = internalMutation({
 	args: {
-		id: v.id('fetchJobs')
+		id: v.id('fetchJobs'),
+		dataLength: v.number(),
+		fetchedPage: v.number()
 	},
 	handler: async (ctx, args) => {
 		await ctx.db.patch(args.id, {
 			status: 'completed',
-			fetchedAt: Date.now()
+			fetchedAt: Date.now(),
+			dataLength: args.dataLength,
+			fetchedPage: args.fetchedPage
 		});
 	}
 });
