@@ -1,19 +1,5 @@
 <script lang="ts">
-	const topics = [
-		'PRODCUT',
-		'COMPANY',
-		'INSIGHT',
-		'PRESS',
-		'EVENTS',
-		'STORIES',
-		'TECHNOLOGY',
-		'BUSINESS',
-		'INDUSTRY INSIGHTS',
-		'CUSTOMER',
-		'EVENTS',
-		'BUSINESS',
-		'LIVESTYLE'
-	];
+	let { categories } = $props();
 
 	const images = [
 		{ className: 'center', src: '/newsroom/hero-main.jpg' },
@@ -28,8 +14,8 @@
 	<div class="headline-wrap">
 		<h1>NEWSROOM</h1>
 		<div class="ticker" aria-label="News categories">
-			{#each topics as topic, index (`${topic}-${index}`)}
-				<span>{topic}</span>
+			{#each categories as item (item.code)}
+				<span class="uppercase">{item.name}</span>
 			{/each}
 		</div>
 	</div>
@@ -84,6 +70,7 @@
 		z-index: 2;
 		display: flex;
 		align-items: center;
+		justify-content: center;
 		gap: 20px;
 		width: min(1631px, 100vw);
 		overflow: hidden;

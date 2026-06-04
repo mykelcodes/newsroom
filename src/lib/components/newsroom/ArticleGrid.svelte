@@ -1,14 +1,9 @@
 <script lang="ts">
+	import type { Doc } from '$convex/_generated/dataModel';
 	import ArticleCard from './ArticleCard.svelte';
 	import SectionHeader from './SectionHeader.svelte';
 
-	type Article = {
-		title: string;
-		date: string;
-		image: string;
-		views?: string;
-		comments?: string;
-	};
+	type Article = Doc<'headlines'>;
 
 	type Props = {
 		articles: Article[];

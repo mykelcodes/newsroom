@@ -1,21 +1,12 @@
 <script lang="ts">
-	import ArticleActions from './ArticleActions.svelte';
+	import type { Doc } from '$convex/_generated/dataModel';
+	import dayjs from 'dayjs';
 	import ArticleGrid from './ArticleGrid.svelte';
 	import SectionHeader from './SectionHeader.svelte';
 
-	type Article = {
-		category?: string;
-		title: string;
-		summary?: string;
-		date: string;
-		image: string;
-		views?: string;
-		comments?: string;
-	};
-
 	type Props = {
-		article: Article;
-		articles: Article[];
+		article?: Doc<'headlines'>;
+		articles: Doc<'headlines'>[];
 	};
 
 	let { article, articles }: Props = $props();
@@ -24,26 +15,33 @@
 <section class="featured-section" aria-labelledby="latest-title">
 	<div class="section-inner">
 		<SectionHeader id="latest-title" title="Latest news" />
-		<article class="featured">
-			<img class="featured-image" src={article.image} alt="" />
-			<div class="featured-content">
-				<div class="featured-copy">
-					{#if article.category}
-						<p class="tag">{article.category}</p>
-					{/if}
-					<div class="title-stack">
-						<h2>{article.title}</h2>
-						<div class="details">
-							{#if article.summary}
-								<p class="summary">{article.summary}</p>
-							{/if}
-							<p class="date">{article.date}</p>
+		{#if article}
+			<a href={article.url} target="_blank" rel="noopener noreferrer external" class="featured">
+				<img class="featured-image" src={article.image} alt="" />
+				<div class="featured-content">
+					<div class="featured-copy">
+						{#if article.category}
+							<p class="tag uppercase">{article.category}</p>
+						{/if}
+						<div class="title-stack">
+							<h2>{article.title}</h2>
+							<div class="details">
+								{#if article.description}
+									<p class="summary">{article.description}</p>
+								{/if}
+								<p class="date">
+									{#if article.sourceName}
+										<span class="source">{article.sourceName}</span> &middot;
+									{/if}
+									{dayjs(article.publishedAt).format('MMM D, YYYY h:mm A')}
+								</p>
+							</div>
 						</div>
 					</div>
+					<!-- <ArticleActions views={article.views} comments={article.comments} /> -->
 				</div>
-				<ArticleActions views={article.views} comments={article.comments} />
-			</div>
-		</article>
+			</a>
+		{/if}
 		<div class="desktop-grid">
 			<ArticleGrid {articles} showHeader={false} />
 		</div>
@@ -67,6 +65,8 @@
 		gap: 45px;
 		align-items: stretch;
 		padding-top: 40px;
+		color: inherit;
+		text-decoration: none;
 	}
 
 	.featured-image {
@@ -127,6 +127,11 @@
 		color: var(--ink-muted);
 		font-size: 14px;
 		line-height: 1.2;
+	}
+
+	.source {
+		color: var(--ink-soft);
+		font-weight: 500;
 	}
 
 	.tag {

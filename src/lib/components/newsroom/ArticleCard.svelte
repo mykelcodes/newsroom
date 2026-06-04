@@ -1,15 +1,8 @@
 <script lang="ts">
-	import ArticleActions from './ArticleActions.svelte';
+	import type { Doc } from '$convex/_generated/dataModel';
+	import dayjs from 'dayjs';
 
-	type Article = {
-		title: string;
-		summary?: string;
-		date: string;
-		image: string;
-		category?: string;
-		views?: string;
-		comments?: string;
-	};
+	type Article = Doc<'headlines'>;
 
 	type Props = {
 		article: Article;
@@ -19,22 +12,33 @@
 	let { article, variant = 'grid' }: Props = $props();
 </script>
 
-<article class:popular={variant === 'popular'} class="article-card">
+<a
+	href={article.url}
+	target="_blank"
+	rel="noopener noreferrer external"
+	class:popular={variant === 'popular'}
+	class="article-card"
+>
 	<img class="article-image" src={article.image} alt="" />
 	<div class="article-body">
 		{#if article.category}
-			<p class="tag">{article.category}</p>
+			<p class="tag uppercase">{article.category}</p>
 		{/if}
 		<div class="article-copy">
 			<h3>{article.title}</h3>
-			{#if article.summary}
-				<p class="summary">{article.summary}</p>
+			{#if article.description}
+				<p class="summary">{article.description}</p>
 			{/if}
-			<p class="date">{article.date}</p>
+			<p class="date">
+				{#if article.sourceName}
+					<span class="source">{article.sourceName}</span> &middot;
+				{/if}
+				{dayjs(article.publishedAt).format('MMM D, YYYY h:mm A')}
+			</p>
 		</div>
 	</div>
-	<ArticleActions views={article.views} comments={article.comments} />
-</article>
+	<!-- <ArticleActions views={article.views} comments={article.comments} /> -->
+</a>
 
 <style>
 	.article-card {
@@ -42,6 +46,8 @@
 		min-width: 0;
 		flex-direction: column;
 		gap: 24px;
+		color: inherit;
+		text-decoration: none;
 	}
 
 	.article-image {
@@ -78,7 +84,7 @@
 
 	.summary {
 		color: var(--ink-soft);
-		font-size: 20px;
+		font-size: 16px;
 		line-height: 1.3;
 	}
 
@@ -86,6 +92,11 @@
 		color: var(--ink-muted);
 		font-size: 14px;
 		line-height: 1.2;
+	}
+
+	.source {
+		color: var(--ink-soft);
+		font-weight: 500;
 	}
 
 	.tag {

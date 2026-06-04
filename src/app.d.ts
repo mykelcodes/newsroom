@@ -1,5 +1,8 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+
+import type { ConvexHttpClient } from 'convex/browser';
+
 declare global {
 	namespace App {
 		interface Platform {
@@ -10,7 +13,9 @@ declare global {
 		}
 
 		// interface Error {}
-		// interface Locals {}
+		interface Locals {
+			convexClient: ConvexHttpClient;
+		}
 		// interface PageData {}
 		// interface PageState {}
 	}

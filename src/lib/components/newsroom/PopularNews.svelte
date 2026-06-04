@@ -1,19 +1,10 @@
 <script lang="ts">
+	import type { Doc } from '$convex/_generated/dataModel';
 	import ArticleCard from './ArticleCard.svelte';
 	import SectionHeader from './SectionHeader.svelte';
 
-	type Article = {
-		category: string;
-		title: string;
-		summary: string;
-		date: string;
-		image: string;
-		views?: string;
-		comments?: string;
-	};
-
 	type Props = {
-		articles: Article[];
+		articles: Doc<'headlines'>[];
 	};
 
 	let { articles }: Props = $props();
@@ -21,7 +12,7 @@
 
 <section class="popular-news" aria-labelledby="popular-title">
 	<div class="section-inner">
-		<SectionHeader id="popular-title" title="Popular news" />
+		<SectionHeader id="popular-title" title="Other news" />
 		<div class="list">
 			{#each articles as article (article.title)}
 				<ArticleCard {article} variant="popular" />

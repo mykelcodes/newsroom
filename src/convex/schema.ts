@@ -16,6 +16,7 @@ const newsArticle = defineTable({
 	sourceName: v.string(),
 	sourceUrl: v.string()
 })
+	.index('by_publishedAt', ['publishedAt'])
 	.index('by_externalId', ['externalId'])
 	.index('by_category_and_publishedAt', ['category', 'publishedAt'])
 	.index('by_country_and_publishedAt', ['country', 'publishedAt'])

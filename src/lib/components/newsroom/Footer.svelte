@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+
+	let { categories } = $props();
 </script>
 
 <footer class="site-footer">
@@ -18,18 +20,9 @@
 			<nav class="footer-links" aria-label="Footer navigation">
 				<div>
 					<h2>News Categories</h2>
-					<a href={resolve('/')}>Breaking News</a>
-					<a href={resolve('/')}>Sports</a>
-					<a href={resolve('/')}>Technology</a>
-					<a href={resolve('/')}>Business</a>
-					<a href={resolve('/')}>Events</a>
-				</div>
-				<div>
-					<h2>Resources</h2>
-					<a href={resolve('/')}>Help Center</a>
-					<a href={resolve('/')}>Editorial Policy</a>
-					<a href={resolve('/')}>Media Kit</a>
-					<a href={resolve('/')}>Advertise With Us</a>
+					{#each categories as category (category.code)}
+						<a href={resolve(`/articles`)}>{category.name}</a>
+					{/each}
 				</div>
 				<div>
 					<h2>Socials</h2>
@@ -142,7 +135,7 @@
 
 	.footer-links {
 		display: flex;
-		justify-content: space-between;
+		justify-content: space-evenly;
 		gap: 32px;
 	}
 

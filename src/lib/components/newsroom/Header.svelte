@@ -3,15 +3,7 @@
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 
-	const navItems = [
-		'TECHNOLOGY',
-		'FASHION',
-		'EVENTS',
-		'COMPANY',
-		'BUSINESS',
-		'INDUSTRY INSIGHTS',
-		'LIVESTYLE'
-	];
+	const { categories } = $props();
 
 	let isSidebarOpen = $state(false);
 	let isDarkMode = $state(false);
@@ -73,6 +65,7 @@
 				aria-expanded={isSidebarOpen}
 				aria-label="Open category menu"
 				onclick={openSidebar}
+				class="menu-toggle"
 			>
 				<svg viewBox="0 0 24 24" aria-hidden="true">
 					<path d="M4 7h16M4 12h16M4 17h16" />
@@ -99,12 +92,12 @@
 		</div>
 		<a class="brand" href={resolve('/')}>NEWSROOM</a>
 		<div class="right-tools">
-			<button type="button" aria-label="Search">
+			<!-- <button type="button" aria-label="Search">
 				<svg viewBox="0 0 24 24" aria-hidden="true">
 					<circle cx="10.5" cy="10.5" r="6.5" />
 					<path d="m16 16 4 4" />
 				</svg>
-			</button>
+			</button> -->
 			<button
 				type="button"
 				aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
@@ -127,8 +120,8 @@
 		</div>
 	</div>
 	<nav aria-label="Primary navigation">
-		{#each navItems as item (item)}
-			<a href={resolve('/')}>{item}</a>
+		{#each categories as item (item.code)}
+			<a href={resolve('/')} class="uppercase">{item.name}</a>
 		{/each}
 	</nav>
 </header>
@@ -158,8 +151,8 @@
 				</button>
 			</div>
 			<nav class="drawer-nav" aria-label="Category navigation">
-				{#each navItems as item (item)}
-					<a href={resolve('/')} onclick={closeSidebar}>{item}</a>
+				{#each categories as item (item.code)}
+					<a href={resolve('/')} class="uppercase" onclick={closeSidebar}>{item.name}</a>
 				{/each}
 			</nav>
 		</div>
@@ -216,6 +209,10 @@
 		font-weight: 700;
 		line-height: 1;
 		letter-spacing: 0;
+	}
+
+	.menu-toggle {
+		display: none;
 	}
 
 	button,
@@ -323,6 +320,10 @@
 	}
 
 	@media (max-width: 1024px) {
+		.menu-toggle {
+			display: grid;
+		}
+
 		.drawer-layer {
 			display: block;
 		}

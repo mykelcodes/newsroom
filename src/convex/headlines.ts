@@ -7,7 +7,11 @@ export const getAll = query({
 		paginationOpts: paginationOptsValidator
 	},
 	handler: async (ctx, { paginationOpts }) => {
-		return await ctx.db.query('headlines').order('desc').paginate(paginationOpts);
+		return await ctx.db
+			.query('headlines')
+			.withIndex('by_publishedAt')
+			.order('desc')
+			.paginate(paginationOpts);
 	}
 });
 
@@ -27,14 +31,28 @@ export const getByCategory = query({
 
 export const getLatest = query({
 	args: {
-		lang: v.string()
+		count: v.optional(v.number())
 	},
-	handler: async (ctx, { lang }) => {
-		return await ctx.db
+	handler: async (ctx, { count = 4 }) => {
+		return await ctx.db.query('headlines').withIndex('by_publishedAt').order('desc').take(count);
+	}
+});
+
+export const getFeatured = query({
+	args: {
+		poolSize: v.optional(v.number())
+	},
+	handler: async (ctx, { poolSize = 10 }) => {
+		const recent = await ctx.db
 			.query('headlines')
-			.withIndex('by_lang_and_publishedAt', (q) => q.eq('lang', lang))
+			.withIndex('by_publishedAt')
 			.order('desc')
-			.first();
+			.take(poolSize);
+
+		if (recent.length === 0) return null;
+
+		const index = Math.floor(Math.random() * recent.length);
+		return recent[index];
 	}
 });
 
