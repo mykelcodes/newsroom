@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { page } from '$app/stores';
 	import { onMount } from 'svelte';
 	import { fade, fly } from 'svelte/transition';
 
@@ -7,6 +8,8 @@
 
 	let isSidebarOpen = $state(false);
 	let isDarkMode = $state(false);
+
+	let activeCategory = $derived($page.url.searchParams.get('category'));
 
 	onMount(() => {
 		const storedTheme = getStoredTheme();
@@ -121,7 +124,12 @@
 	</div>
 	<nav aria-label="Primary navigation">
 		{#each categories as item (item.code)}
-			<a href={resolve('/')} class="uppercase">{item.name}</a>
+			<a
+				href={resolve(`/articles?category=${item.code}`)}
+				class="uppercase"
+				class:active={activeCategory === item.code}
+				aria-current={activeCategory === item.code ? 'page' : undefined}>{item.name}</a
+			>
 		{/each}
 	</nav>
 </header>
@@ -152,7 +160,13 @@
 			</div>
 			<nav class="drawer-nav" aria-label="Category navigation">
 				{#each categories as item (item.code)}
-					<a href={resolve('/')} class="uppercase" onclick={closeSidebar}>{item.name}</a>
+					<a
+						href={resolve(`/articles?category=${item.code}`)}
+						class="uppercase"
+						class:active={activeCategory === item.code}
+						aria-current={activeCategory === item.code ? 'page' : undefined}
+						onclick={closeSidebar}>{item.name}</a
+					>
 				{/each}
 			</nav>
 		</div>
@@ -161,7 +175,10 @@
 
 <style>
 	.site-header {
-		position: relative;
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
 		z-index: 5;
 		background: var(--surface);
 		border-bottom: 1px solid var(--line-strong);
@@ -254,6 +271,11 @@
 		white-space: nowrap;
 	}
 
+	nav a.active {
+		font-weight: 700;
+		border-bottom: 2px solid var(--ink);
+	}
+
 	.drawer-layer {
 		position: fixed;
 		inset: 0;
@@ -310,6 +332,12 @@
 	.drawer-nav a {
 		border-bottom: 1px solid var(--line-subtle);
 		padding: 18px 24px;
+	}
+
+	.drawer-nav a.active {
+		font-weight: 700;
+		color: var(--ink);
+		background: var(--surface-elevated);
 	}
 
 	.drawer-nav a:focus-visible,

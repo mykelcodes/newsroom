@@ -1,18 +1,21 @@
-import type { PageLoad } from './$types';
+import { api } from '$convex/_generated/api';
+import type { PageServerLoad } from './$types';
 
-export const load: PageLoad = ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
 	const category = getOptionalParam(url.searchParams.get('category'));
-	const type = getOptionalParam(url.searchParams.get('type'));
 	const rawPage = url.searchParams.get('page');
 	const parsedPage = rawPage ? Number.parseInt(rawPage, 10) : 1;
-	const page = Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+
+	const articles = await locals.convexClient.query(api.headlines.getAll, {
+		paginationOpts: { numItems: 20, cursor: null },
+		categoryCode: category ?? undefined
+	});
 
 	return {
+		articles,
 		filters: {
 			category,
-			type,
-			page,
-			hasQuery: category !== null || type !== null || rawPage !== null
+			page: parsedPage
 		}
 	};
 };

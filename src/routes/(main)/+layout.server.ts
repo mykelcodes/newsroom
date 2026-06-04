@@ -1,7 +1,7 @@
-import { api } from '../convex/_generated/api';
-import type { PageServerLoad } from './$types';
+import { api } from '$convex/_generated/api';
+import type { LayoutServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: LayoutServerLoad = async ({ locals }) => {
 	const initialCategoriesPromise = locals.convexClient.query(api.categories.getAll, {});
 	const initialLatestPromise = locals.convexClient.query(api.headlines.getLatest, {
 		count: 4

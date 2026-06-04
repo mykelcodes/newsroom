@@ -4,9 +4,18 @@ import { internalMutation, query } from './_generated/server';
 
 export const getAll = query({
 	args: {
-		paginationOpts: paginationOptsValidator
+		paginationOpts: paginationOptsValidator,
+		categoryCode: v.optional(v.string())
 	},
-	handler: async (ctx, { paginationOpts }) => {
+	handler: async (ctx, { paginationOpts, categoryCode }) => {
+		if (categoryCode) {
+			return await ctx.db
+				.query('headlines')
+				.withIndex('by_category_and_publishedAt', (q) => q.eq('category', categoryCode))
+				.order('desc')
+				.paginate(paginationOpts);
+		}
+
 		return await ctx.db
 			.query('headlines')
 			.withIndex('by_publishedAt')

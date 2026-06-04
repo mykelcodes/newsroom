@@ -21,7 +21,7 @@
 				<div>
 					<h2>News Categories</h2>
 					{#each categories as category (category.code)}
-						<a href={resolve(`/articles`)}>{category.name}</a>
+						<a href={resolve(`/articles?category=${category.code}`)}>{category.name}</a>
 					{/each}
 				</div>
 				<div>
