@@ -1,6 +1,6 @@
 # Newsroom
 
-Newsroom is a SvelteKit and Convex project for collecting, storing, and querying news headlines. The current implementation is focused on the backend ingestion pipeline: Convex scheduled jobs fetch top headlines from GNews, store unique articles, and expose query functions that a frontend can build on.
+Newsroom is a SvelteKit and Convex project for collecting, storing, querying, and presenting news headlines. The backend ingestion pipeline uses Convex scheduled jobs to fetch top headlines from GNews, store unique articles, and expose query functions. The frontend includes a responsive editorial newsroom landing page built from reusable Svelte components and local image assets.
 
 The repository is public, so configuration examples use placeholder values only. Do not commit real API keys, deployment secrets, or local environment files.
 
@@ -13,14 +13,17 @@ The repository is public, so configuration examples use placeholder values only.
 - Retries failed fetch jobs on a cron schedule.
 - Spaces scheduled fetch actions apart to reduce bursty upstream API traffic.
 - Provides Convex queries for listing headlines and reading headlines by category/language.
+- Presents a responsive newsroom homepage with a masthead, category navigation, hero collage, latest news, video highlights, popular stories, and footer newsletter form.
+- Supports a light/dark UI theme toggle with the selected theme stored in local storage.
 
-The frontend in `src/routes` is still minimal. Most of the project logic currently lives in `src/convex`.
+The homepage currently uses static editorial data and image assets in `src/routes/+page.svelte` and `static/newsroom`. The Convex headline queries are available for wiring live data into the UI as the product evolves.
 
 ## Tech Stack
 
 - SvelteKit 2 and Svelte 5
 - TypeScript
 - Convex for database, server functions, scheduled jobs, and generated API types
+- Tailwind CSS v4 and component-scoped Svelte styles for the UI
 - Cloudflare adapter and Wrangler for deployment targets
 - pnpm for package management
 - Prettier and ESLint for formatting/linting
@@ -36,8 +39,14 @@ src/
 		fetchJobs.ts       Fetch job state transitions
 		headlines.ts       Headline queries and insert mutation
 		categories.ts      Category queries and fetch schedule updates
+	lib/
+		components/
+			newsroom/        Header, hero, article, video, popular-news, and footer UI components
 	routes/
 		+page.svelte       SvelteKit app entry page
+		layout.css         Global typography, theme variables, and shared base styles
+static/
+	newsroom/            Local images used by the newsroom landing page
 ```
 
 ## Prerequisites
@@ -82,7 +91,13 @@ Install dependencies:
 pnpm install
 ```
 
-Start Convex in one terminal:
+Start Convex and the SvelteKit dev server together:
+
+```sh
+pnpm dev
+```
+
+Or start each process separately if you want to inspect their logs in different terminals:
 
 ```sh
 pnpm convex:dev
@@ -93,8 +108,6 @@ Start the SvelteKit dev server in another terminal:
 ```sh
 pnpm exec vite dev
 ```
-
-The `pnpm dev` script exists, but Convex dev is a long-running process, so using two terminals is usually clearer during local development.
 
 ## Convex Data Setup
 
@@ -121,6 +134,7 @@ Set `nextFetchAt` to a timestamp at or before `Date.now()` when you want a categ
 pnpm convex:dev      # Run Convex locally
 pnpm convex:build    # Validate/build Convex functions
 pnpm convex:deploy   # Deploy Convex functions
+pnpm dev             # Run Convex and Vite together
 pnpm build           # Build the SvelteKit app for Cloudflare
 pnpm preview         # Preview the Cloudflare worker output
 pnpm check           # Run Svelte/TypeScript checks
@@ -138,6 +152,18 @@ This repository should not contain production secrets.
 - If a secret is accidentally committed, rotate it immediately and remove it from Git history before relying on the repository again.
 - Before pushing, check that only placeholder env files are tracked and that no concrete key values appear in source or docs.
 
+## Frontend UI
+
+The staged UI is a static, responsive newsroom landing page composed from files in `src/lib/components/newsroom`:
+
+- `Header.svelte` provides the top bar, social links, category drawer, primary navigation, search button, and theme toggle.
+- `Hero.svelte` renders the oversized NEWSROOM masthead, category ticker, and image collage.
+- `FeaturedArticle.svelte`, `ArticleGrid.svelte`, and `ArticleCard.svelte` render the latest-news feature and supporting cards.
+- `EditorialBand.svelte`, `VideoGrid.svelte`, and `PopularNews.svelte` add the editorial image band, video highlights, and popular-story list.
+- `Footer.svelte` includes newsletter signup, footer navigation, social links, and a back-to-top link.
+
+The UI is not yet connected to live Convex headline data. Article content in `src/routes/+page.svelte` is sample content used to compose and style the page.
+
 ## Current Status
 
-Newsroom is an early-stage project. The backend ingestion model is in active development, while the SvelteKit UI is still a starter shell.
+Newsroom is an early-stage project. The backend ingestion model is in active development, and the SvelteKit frontend has a polished static landing page ready to be connected to live Convex data.
