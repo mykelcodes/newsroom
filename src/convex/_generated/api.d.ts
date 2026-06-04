@@ -11,10 +11,11 @@
 import type * as categories from "../categories.js";
 import type * as countries from "../countries.js";
 import type * as crons from "../crons.js";
+import type * as fetchJobs from "../fetchJobs.js";
 import type * as gnews from "../gnews.js";
-import type * as gnewsState from "../gnewsState.js";
 import type * as headlines from "../headlines.js";
 import type * as languages from "../languages.js";
+import type * as newsScheduler from "../newsScheduler.js";
 
 import type {
   ApiFromModules,
@@ -26,10 +27,11 @@ declare const fullApi: ApiFromModules<{
   categories: typeof categories;
   countries: typeof countries;
   crons: typeof crons;
+  fetchJobs: typeof fetchJobs;
   gnews: typeof gnews;
-  gnewsState: typeof gnewsState;
   headlines: typeof headlines;
   languages: typeof languages;
+  newsScheduler: typeof newsScheduler;
 }>;
 
 /**

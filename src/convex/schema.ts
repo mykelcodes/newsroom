@@ -32,17 +32,32 @@ export default defineSchema({
 	categories: defineTable({
 		name: v.string(),
 		code: v.string(),
-		description: v.nullable(v.string())
-	}).index('by_code', ['code']),
+		enabled: v.boolean(),
+		description: v.nullable(v.string()),
+		lastFetchedAt: v.optional(v.number()),
+		nextFetchAt: v.optional(v.number()),
+		fetchIntervalSeconds: v.number(),
+		lastFetchedPage: v.number()
+	})
+		.index('by_code', ['code'])
+		.index('by_enabled_nextFetchAt', ['enabled', 'nextFetchAt']),
 	countries: defineTable({
 		name: v.string(),
 		code: v.string()
 	}).index('by_code', ['code']),
-	gnewsFetchStates: defineTable({
-		source: v.string(),
-		lastCategoryCode: v.string(),
-		lastFetchedAt: v.number()
-	}).index('by_source', ['source']),
 	headlines: newsArticle,
-	articles: newsArticle
+	articles: newsArticle,
+	fetchJobs: defineTable({
+		categoryId: v.id('categories'),
+		status: v.union(
+			v.literal('pending'),
+			v.literal('in_progress'),
+			v.literal('completed'),
+			v.literal('failed')
+		),
+		error: v.nullable(v.string()),
+		fetchedAt: v.nullable(v.number())
+	})
+		.index('by_status', ['status'])
+		.index('by_categoryId_and_status', ['categoryId', 'status'])
 });
