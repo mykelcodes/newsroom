@@ -14,7 +14,7 @@
 	<div class="section-inner">
 		<SectionHeader id="popular-title" title="Other news" />
 		<div class="list">
-			{#each articles as article (article.title)}
+			{#each articles as article (article._id)}
 				<ArticleCard {article} variant="popular" />
 			{/each}
 		</div>

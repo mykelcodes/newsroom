@@ -23,7 +23,7 @@
 		<SectionHeader id="latest-grid-title" title="Latest news" />
 	{/if}
 	<div class="grid">
-		{#each articles as article (article.title)}
+		{#each articles as article (article._id)}
 			<ArticleCard {article} />
 		{/each}
 	</div>
