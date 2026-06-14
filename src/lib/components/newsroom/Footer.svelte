@@ -27,17 +27,32 @@
 				<div>
 					<h2>Socials</h2>
 					<div class="socials">
-						<a href={resolve('/')} aria-label="X">
+						<a
+							href="https://x.com/mykel_io"
+							rel="noreferral external"
+							target="_blank"
+							aria-label="X"
+						>
 							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 4 16 16M20 4 4 20" /></svg>
 						</a>
-						<a href={resolve('/')} aria-label="Instagram">
+						<a
+							href="https://www.instagram.com/mykel_io/"
+							rel="noreferral external"
+							target="_blank"
+							aria-label="Instagram"
+						>
 							<svg viewBox="0 0 24 24" aria-hidden="true">
 								<rect x="4" y="4" width="16" height="16" rx="5" />
 								<circle cx="12" cy="12" r="3.2" />
 								<circle cx="17" cy="7" r="0.8" />
 							</svg>
 						</a>
-						<a href={resolve('/')} aria-label="LinkedIn">
+						<a
+							href="https://www.linkedin.com/in/michaelolawale/"
+							rel="noreferral external"
+							target="_blank"
+							aria-label="LinkedIn"
+						>
 							<svg viewBox="0 0 24 24" aria-hidden="true">
 								<path
 									d="M6.5 10v8M6.5 6.5v.1M11 18v-8M11 13.5c0-2.1 1.2-3.7 3.3-3.7 2 0 3.2 1.3 3.2 3.8V18"
