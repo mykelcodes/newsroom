@@ -15,7 +15,7 @@
 </script>
 
 <Header categories={categories.data} />
-<div class="layout-body">
+<div id="top" class="layout-body">
 	{@render children()}
 	<Footer categories={categories.data} />
 </div>
