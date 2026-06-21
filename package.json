@@ -10,8 +10,8 @@
 		"dev:mobile": "pnpm --filter mobile start",
 		"dev:backend": "pnpm --filter @newsroom/backend dev",
 		"build:web": "pnpm --filter web build",
-		"deploy:web": "pnpm --filter web deploy",
-		"convex:deploy": "pnpm --filter @newsroom/backend deploy",
+		"deploy:web": "pnpm --filter web run deploy",
+		"convex:deploy": "pnpm --filter @newsroom/backend run deploy",
 		"check": "pnpm -r --if-present check",
 		"lint": "pnpm -r --if-present lint",
 		"format": "prettier --write ."
