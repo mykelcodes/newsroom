@@ -30,24 +30,34 @@ The homepage currently uses static editorial data and image assets in `src/route
 
 ## Project Structure
 
+pnpm monorepo (pnpm workspace) with two apps sharing one Convex backend:
+
 ```txt
-src/
-	convex/
-		schema.ts          Convex tables and indexes
-		gnews.ts           Internal action that fetches GNews headlines
-		newsScheduler.ts   Cron-facing job enqueue/retry logic
-		fetchJobs.ts       Fetch job state transitions
-		headlines.ts       Headline queries and insert mutation
-		categories.ts      Category queries and fetch schedule updates
-	lib/
-		components/
-			newsroom/        Header, hero, article, video, popular-news, and footer UI components
-	routes/
-		+page.svelte       SvelteKit app entry page
-		layout.css         Global typography, theme variables, and shared base styles
-static/
-	newsroom/            Local images used by the newsroom landing page
+apps/
+	web/                     SvelteKit app (Cloudflare), consumes @newsroom/backend
+		src/lib/components/
+			newsroom/            Header, hero, article, video, popular-news, and footer UI components
+		src/routes/
+			+page.svelte         SvelteKit app entry page
+			layout.css           Global typography, theme variables, and shared base styles
+		static/newsroom/         Local images used by the newsroom landing page
+	mobile/                  Expo (React Native) app, expo-router, consumes @newsroom/backend
+		app/                     File-based routes (_layout.tsx wires the Convex provider)
+packages/
+	backend/                 Shared Convex backend (@newsroom/backend)
+		convex/
+			schema.ts            Convex tables and indexes
+			gnews.ts             Internal action that fetches GNews headlines
+			newsScheduler.ts     Cron-facing job enqueue/retry logic
+			fetchJobs.ts         Fetch job state transitions
+			headlines.ts         Headline queries and insert mutation
+			categories.ts        Category queries and fetch schedule updates
+		convex.json              Points Convex at ./convex
 ```
+
+The web and mobile apps import the generated client from the shared package:
+`import { api } from '@newsroom/backend/api'` and
+`import type { Doc } from '@newsroom/backend/dataModel'`.
 
 ## Prerequisites
 
@@ -59,27 +69,35 @@ static/
 
 ## Environment Variables
 
-Copy the example file and fill in local values:
+Env vars live with the package that consumes them. Copy each example file and fill in local values:
 
 ```sh
-cp .env.example .env.local
+cp packages/backend/.env.example packages/backend/.env.local   # Convex backend
+cp apps/web/.env.example apps/web/.env.local                   # SvelteKit web app
+cp apps/mobile/.env.example apps/mobile/.env                    # Expo mobile app
 ```
 
 Expected variables:
 
 ```sh
+# packages/backend/.env.local
 GNEWS_API_KEY=
 RUN_GNEWS_CRON=
 CONVEX_DEPLOYMENT=
+
+# apps/web/.env.local
 PUBLIC_CONVEX_URL=
 PUBLIC_CONVEX_SITE_URL=
+
+# apps/mobile/.env
+EXPO_PUBLIC_CONVEX_URL=
 ```
 
 Notes:
 
 - `GNEWS_API_KEY` is required by the Convex GNews fetch action.
-- `RUN_GNEWS_CRON=true` enables the GNews cron definitions in `src/convex/crons.ts`.
-- `CONVEX_DEPLOYMENT` and `PUBLIC_CONVEX_URL` are created by Convex setup/dev flows.
+- `RUN_GNEWS_CRON=true` enables the GNews cron definitions in `packages/backend/convex/crons.ts`.
+- `CONVEX_DEPLOYMENT` and the `*_CONVEX_URL` values are created by Convex setup/dev flows.
 - Keep real values in `.env.local` or Convex environment variables. `.env.local` is ignored by Git.
 - For deployed Convex functions, set sensitive values with Convex environment management, for example `pnpm exec convex env set GNEWS_API_KEY <value>`.
 
@@ -91,7 +109,7 @@ Install dependencies:
 pnpm install
 ```
 
-Start Convex and the SvelteKit dev server together:
+Start the Convex backend and the SvelteKit web dev server together:
 
 ```sh
 pnpm dev
@@ -100,13 +118,9 @@ pnpm dev
 Or start each process separately if you want to inspect their logs in different terminals:
 
 ```sh
-pnpm convex:dev
-```
-
-Start the SvelteKit dev server in another terminal:
-
-```sh
-pnpm exec vite dev
+pnpm dev:backend   # Convex
+pnpm dev:web       # SvelteKit
+pnpm dev:mobile    # Expo (mobile)
 ```
 
 ## Convex Data Setup
@@ -130,17 +144,22 @@ Set `nextFetchAt` to a timestamp at or before `Date.now()` when you want a categ
 
 ## Available Scripts
 
+Run from the repo root:
+
 ```sh
-pnpm convex:dev      # Run Convex locally
-pnpm convex:build    # Validate/build Convex functions
+pnpm dev             # Run Convex backend + SvelteKit web together
+pnpm dev:web         # SvelteKit web dev server
+pnpm dev:mobile      # Expo mobile dev server
+pnpm dev:backend     # Convex dev (codegen + push)
+pnpm build:web       # Build the SvelteKit app for Cloudflare
 pnpm convex:deploy   # Deploy Convex functions
-pnpm dev             # Run Convex and Vite together
-pnpm build           # Build the SvelteKit app for Cloudflare
-pnpm preview         # Preview the Cloudflare worker output
-pnpm check           # Run Svelte/TypeScript checks
-pnpm lint            # Run Prettier check and ESLint
+pnpm check           # Run checks across all packages
+pnpm lint            # Lint across all packages
 pnpm format          # Format the repository
 ```
+
+Per-package commands use pnpm filters, e.g. `pnpm --filter web preview`,
+`pnpm --filter @newsroom/backend deploy`, or `pnpm --filter mobile ios`.
 
 ## Secret Safety
 

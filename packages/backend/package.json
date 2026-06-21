@@ -1,0 +1,21 @@
+{
+	"name": "@newsroom/backend",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./api": "./convex/_generated/api.js",
+		"./server": "./convex/_generated/server.js",
+		"./dataModel": {
+			"types": "./convex/_generated/dataModel.d.ts"
+		}
+	},
+	"scripts": {
+		"dev": "convex dev",
+		"deploy": "convex deploy",
+		"build": "convex build"
+	},
+	"dependencies": {
+		"convex": "1.40.0"
+	}
+}

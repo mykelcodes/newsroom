@@ -1,20 +1,12 @@
 node_modules
 
-# Build output
+# Output
 .output
 .vercel
 .netlify
 .wrangler
-.svelte-kit
+/.svelte-kit
 /build
-dist
-
-# Expo / React Native
-.expo
-apps/mobile/ios
-apps/mobile/android
-*.orig.*
-web-build
 
 # OS
 .DS_Store
