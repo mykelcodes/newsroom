@@ -6,4 +6,8 @@ bun.lock
 bun.lockb
 
 # Miscellaneous
-/static/
+apps/web/static/
+apps/web/.svelte-kit/
+apps/web/worker-configuration.d.ts
+**/_generated/
+apps/mobile/.expo/
