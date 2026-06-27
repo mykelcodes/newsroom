@@ -13,6 +13,7 @@ export function Header() {
 
 const styles = StyleSheet.create((t) => ({
 	container: {
+		paddingHorizontal: t.gap(4),
 		paddingBottom: t.gap(2.5),
 		marginBottom: t.gap(4.5)
 	},

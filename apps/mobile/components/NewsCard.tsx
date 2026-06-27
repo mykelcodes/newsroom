@@ -4,7 +4,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { StyleSheet } from 'react-native-unistyles';
 
-type NewsCardProps = Doc<'headlines'> & { onPress?: () => void };
+type NewsCardProps = Doc<'headlines'> & { onPress?: () => void; hideCategory?: boolean };
 
 export function NewsCard({
 	title,
@@ -12,7 +12,8 @@ export function NewsCard({
 	onPress,
 	image,
 	publishedAt,
-	category
+	category,
+	hideCategory = false
 }: NewsCardProps) {
 	return (
 		<Pressable onPress={onPress}>
@@ -35,7 +36,7 @@ export function NewsCard({
 							<Text style={styles.createdAt}>
 								{dayjs(publishedAt).format('MMM D, YYYY h:mm A')}
 							</Text>
-							<Text style={styles.category}>{category}</Text>
+							{!hideCategory && <Text style={styles.category}>{category}</Text>}
 						</View>
 					</View>
 				</Animated.View>

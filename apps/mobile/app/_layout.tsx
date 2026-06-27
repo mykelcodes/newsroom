@@ -3,6 +3,7 @@ import '../unistyles';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useUnistyles } from 'react-native-unistyles';
 import { isIOS, isIOS26Above, isIOS26Below } from '../lib/platform';
 
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
@@ -16,6 +17,8 @@ const convex = new ConvexReactClient(convexUrl, {
 });
 
 export default function RootLayout() {
+	const { theme } = useUnistyles();
+
 	return (
 		<ConvexProvider client={convex}>
 			<StatusBar style="dark" />
@@ -25,10 +28,12 @@ export default function RootLayout() {
 					headerShadowVisible: false,
 					headerTransparent: isIOS,
 					headerBlurEffect: isIOS26Below ? 'light' : undefined,
-					scrollEdgeEffects: isIOS26Above ? { top: 'automatic' } : undefined
+					scrollEdgeEffects: isIOS26Above ? { top: 'automatic' } : undefined,
+					headerTintColor: theme.colors.foreground_primary
 				}}
 			>
 				<Stack.Screen name="index" options={{ headerTitle: '', headerShown: isIOS26Above }} />
+				<Stack.Screen name="news/[category]" options={{ headerLargeTitleEnabled: true }} />
 			</Stack>
 		</ConvexProvider>
 	);
