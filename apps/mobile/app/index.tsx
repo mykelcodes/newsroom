@@ -1,70 +1,70 @@
-import { useQuery } from 'convex/react';
 import { api } from '@newsroom/backend/api';
-import type { Doc } from '@newsroom/backend/dataModel';
-import {
-	ActivityIndicator,
-	FlatList,
-	Image,
-	StyleSheet,
-	Text,
-	View
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Doc } from '@newsroom/backend/dataModel';
+import { usePaginatedQuery } from 'convex/react';
+import { ActivityIndicator, FlatList, View } from 'react-native';
+import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { Header } from '../components/Header';
+import { NewsCard } from '../components/NewsCard';
+import { openLink } from '../lib/open-link';
 
 export default function Home() {
-	const headlines = useQuery(api.headlines.getLatest, { count: 20 });
+	const { theme } = useUnistyles();
+	const news = usePaginatedQuery(api.headlines.getAll, {}, { initialNumItems: 20 });
+	const headline = news.results[0];
+	const results = news.results.slice(1);
+
+	if (news.status === 'LoadingFirstPage') {
+		return (
+			<View style={styles.indicator}>
+				<ActivityIndicator color={theme.colors.accent} size="large" />
+			</View>
+		);
+	}
 
 	return (
-		<SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-			<View style={styles.header}>
-				<Text style={styles.kicker}>NEWSROOM</Text>
-				<Text style={styles.title}>Latest Headlines</Text>
-			</View>
-
-			{headlines === undefined ? (
-				<View style={styles.center}>
-					<ActivityIndicator size="large" color="#111" />
+		<FlatList
+			data={results}
+			renderItem={({ item }) => (
+				<View style={styles.itemWrapper}>
+					<NewsCard {...item} onPress={() => openLink(item.url)} />
 				</View>
-			) : headlines.length === 0 ? (
-				<View style={styles.center}>
-					<Text style={styles.empty}>No headlines yet.</Text>
-				</View>
-			) : (
-				<FlatList
-					data={headlines}
-					keyExtractor={(item) => item._id}
-					contentContainerStyle={styles.list}
-					renderItem={({ item }) => <HeadlineCard headline={item} />}
-				/>
 			)}
-		</SafeAreaView>
+			keyExtractor={(item) => item._id}
+			contentContainerStyle={styles.flatList}
+			onEndReachedThreshold={0.7}
+			onEndReached={news.status === 'CanLoadMore' ? () => news.loadMore(20) : undefined}
+			ListFooterComponent={
+				news.status === 'LoadingMore' ? (
+					<ActivityIndicator color={theme.colors.accent} size="large" />
+				) : null
+			}
+			ListHeaderComponent={<HeaderComponent headline={headline} />}
+		/>
 	);
 }
 
-function HeadlineCard({ headline }: { headline: Doc<'headlines'> }) {
+const HeaderComponent = ({ headline }: { headline?: Doc<'headlines'> }) => {
 	return (
-		<View style={styles.card}>
-			{headline.image ? (
-				<Image source={{ uri: headline.image }} style={styles.image} />
-			) : null}
-			<Text style={styles.category}>{headline.category.toUpperCase()}</Text>
-			<Text style={styles.cardTitle}>{headline.title}</Text>
-			<Text style={styles.source}>{headline.sourceName}</Text>
+		<View style={styles.topSection}>
+			<Header />
+			{!!headline && <NewsCard.Headline {...headline} onPress={() => openLink(headline.url)} />}
 		</View>
 	);
-}
+};
 
-const styles = StyleSheet.create({
-	container: { flex: 1, backgroundColor: '#fff' },
-	header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 8 },
-	kicker: { fontSize: 12, letterSpacing: 2, color: '#c00', fontWeight: '700' },
-	title: { fontSize: 28, fontWeight: '800', color: '#111' },
-	center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-	empty: { color: '#666', fontSize: 16 },
-	list: { padding: 16, gap: 20 },
-	card: { gap: 6 },
-	image: { width: '100%', height: 180, borderRadius: 10, backgroundColor: '#eee' },
-	category: { fontSize: 11, letterSpacing: 1, color: '#c00', fontWeight: '700' },
-	cardTitle: { fontSize: 18, fontWeight: '700', color: '#111', lineHeight: 24 },
-	source: { fontSize: 13, color: '#777' }
-});
+const styles = StyleSheet.create((t, rt) => ({
+	indicator: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	topSection: {
+		paddingHorizontal: t.gap(4),
+		paddingBottom: t.gap(4)
+	},
+	flatList: {
+		paddingTop: t.gap(6) + rt.insets.top,
+		paddingBottom: rt.insets.bottom
+	},
+	itemWrapper: { paddingHorizontal: t.gap(4), marginBottom: t.gap(4) }
+}));
