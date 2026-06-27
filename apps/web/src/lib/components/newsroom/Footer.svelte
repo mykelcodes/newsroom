@@ -68,6 +68,7 @@
 			<div class="legal">
 				<a href="#top">Back to top <span aria-hidden="true">&uarr;</span></a>
 				<div class="legal-meta">
+					<a href={resolve('/support')}>Support</a>
 					<a href={resolve('/privacy')}>Privacy Policy</a>
 					<span>Copyright &copy; Newsroom 2026</span>
 				</div>
