@@ -67,7 +67,10 @@
 			<p>NEWSROOM</p>
 			<div class="legal">
 				<a href="#top">Back to top <span aria-hidden="true">&uarr;</span></a>
-				<span>Copyright &copy; Newsroom 2026</span>
+				<div class="legal-meta">
+					<a href={resolve('/privacy')}>Privacy Policy</a>
+					<span>Copyright &copy; Newsroom 2026</span>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -224,6 +227,11 @@
 		color: var(--footer-ink);
 		font-size: 14px;
 		line-height: 1.4;
+	}
+
+	.legal-meta {
+		display: flex;
+		gap: 24px;
 	}
 
 	.sr-only {
