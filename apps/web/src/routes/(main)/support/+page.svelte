@@ -15,7 +15,7 @@
 		},
 		{
 			q: 'How often is the news updated?',
-			a: 'Top headlines are refreshed throughout the day, so you always see the latest stories across each category.'
+			a: 'Newsroom pulls in the top headlines published in the last 24 hours and adds them to each category throughout the day, with the newest stories always shown first.'
 		},
 		{
 			q: 'Why can’t I open a particular article?',

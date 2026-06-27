@@ -45,8 +45,8 @@
 	<section class="legal-body">
 		<div class="legal-inner prose">
 			<p>
-				Newsroom (“we”, “us”, or “the app”) is a free news reader that brings you top headlines from
-				around the world. This policy explains what data is and isn’t handled when you use the
+				Newsroom (“we”, “us”, or “the app”) is a free news reader that brings you the UK’s top
+				headlines. This policy explains what data is and isn’t handled when you use the
 				Newsroom mobile app or website (together, the “Service”). The short version: we don’t require
 				an account, we don’t ask you for personal information, and we don’t track you.
 			</p>
