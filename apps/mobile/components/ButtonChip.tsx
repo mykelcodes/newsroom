@@ -17,7 +17,7 @@ export function ButtonChip({ label, onPress }: ButtonChipProps) {
 const styles = StyleSheet.create((t) => ({
 	container: (pressed: boolean) => ({
 		paddingHorizontal: t.gap(3),
-		backgroundColor: t.colors.background_primary,
+		backgroundColor: t.colors.background_secondary,
 		opacity: pressed ? 0.5 : 1,
 		paddingVertical: t.gap(2),
 		borderRadius: 999

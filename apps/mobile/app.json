@@ -1,25 +1,30 @@
 {
 	"expo": {
-		"name": "Newsroom",
+		"name": "Newsroom — Daily Headlines",
 		"slug": "newsroom",
 		"version": "1.0.0",
 		"scheme": "newsroom",
 		"orientation": "portrait",
 		"icon": "./assets/icon.png",
-		"userInterfaceStyle": "light",
+		"userInterfaceStyle": "automatic",
 		"ios": {
-			"supportsTablet": true,
-			"bundleIdentifier": "com.mykelcodes.newsroom"
+			"supportsTablet": false,
+			"bundleIdentifier": "com.mykelcodes.newsroom",
+			"buildNumber": "1",
+			"infoPlist": {
+				"ITSAppUsesNonExemptEncryption": false
+			}
 		},
 		"android": {
 			"adaptiveIcon": {
-				"backgroundColor": "#E6F4FE",
+				"backgroundColor": "#0f0f0f",
 				"foregroundImage": "./assets/android-icon-foreground.png",
 				"backgroundImage": "./assets/android-icon-background.png",
 				"monochromeImage": "./assets/android-icon-monochrome.png"
 			},
 			"predictiveBackGestureEnabled": false,
-			"package": "com.mykelcodes.newsroom"
+			"package": "com.mykelcodes.newsroom",
+			"versionCode": 1
 		},
 		"web": {
 			"favicon": "./assets/favicon.png"
@@ -41,6 +46,10 @@
 					"skipOnboarding": false,
 					"showMenuAtLaunch": true
 				}
+			],
+			[
+				"expo-splash-screen",
+				{ "backgroundColor": "#0f0f0f", "image": "./assets/icon.png", "imageWidth": 200 }
 			]
 		]
 	}

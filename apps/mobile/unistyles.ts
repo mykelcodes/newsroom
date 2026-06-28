@@ -3,6 +3,7 @@ import { StyleSheet } from 'react-native-unistyles';
 const lightTheme = {
 	colors: {
 		background_primary: '#fff',
+		background_secondary: '#f2f2f7',
 		foreground_primary: '#000',
 		foreground_secondary: 'rgba(0, 0, 0, 0.4)',
 		foreground_disabled: '#999',
@@ -15,6 +16,7 @@ const lightTheme = {
 const darkTheme = {
 	colors: {
 		background_primary: '#000',
+		background_secondary: '#2c2c2e',
 		foreground_primary: '#fff',
 		foreground_secondary: 'rgba(255, 255, 255, 0.5)',
 		foreground_disabled: '#666',
@@ -40,7 +42,7 @@ const breakpoints = {
 StyleSheet.configure({
 	themes: appThemes,
 	breakpoints,
-	settings: { initialTheme: 'light' }
+	settings: { adaptiveThemes: true }
 });
 
 type AppThemes = typeof appThemes;

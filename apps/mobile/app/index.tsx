@@ -10,7 +10,7 @@ import { Header } from '../components/Header';
 import { NewsCard } from '../components/NewsCard';
 import { openLink } from '../lib/open-link';
 
-export default function Home() {
+export default function HomeScreen() {
 	const { theme } = useUnistyles();
 	const news = usePaginatedQuery(api.headlines.getAll, {}, { initialNumItems: 20 });
 	const categories = useQuery(api.categories.getAll);

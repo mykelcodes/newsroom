@@ -76,7 +76,7 @@ NewsCard.Headline = Headline;
 const styles = StyleSheet.create((t) => ({
 	container: (pressed: boolean) => ({
 		borderRadius: 16,
-		backgroundColor: 'white',
+		backgroundColor: t.colors.background_secondary,
 		overflow: 'hidden',
 		transitionProperty: ['transform'],
 		transitionDuration: 300,
@@ -85,7 +85,8 @@ const styles = StyleSheet.create((t) => ({
 	source: {
 		fontFamily: 'Monoton-Regular',
 		textTransform: 'uppercase',
-		fontSize: 14
+		fontSize: 14,
+		color: t.colors.foreground_primary
 	},
 	mainContent: { padding: 16 },
 	topContent: {
