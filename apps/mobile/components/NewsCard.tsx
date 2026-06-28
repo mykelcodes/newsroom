@@ -76,7 +76,7 @@ NewsCard.Headline = Headline;
 const styles = StyleSheet.create((t) => ({
 	container: (pressed: boolean) => ({
 		borderRadius: 16,
-		backgroundColor: t.colors.background_secondary,
+		backgroundColor: t.colors.background_primary,
 		overflow: 'hidden',
 		transitionProperty: ['transform'],
 		transitionDuration: 300,
