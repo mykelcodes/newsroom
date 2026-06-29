@@ -1,14 +1,14 @@
+import { ButtonChip } from '#/components/ButtonChip';
+import { FullscreenLoader } from '#/components/FullscreenLoader';
+import { Header } from '#/components/Header';
+import { NewsCard } from '#/components/NewsCard';
+import { openLink } from '#/lib/open-link';
 import { api } from '@newsroom/backend/api';
 import { Doc } from '@newsroom/backend/dataModel';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
-import { ButtonChip } from '../components/ButtonChip';
-import { FullscreenLoader } from '../components/FullscreenLoader';
-import { Header } from '../components/Header';
-import { NewsCard } from '../components/NewsCard';
-import { openLink } from '../lib/open-link';
 
 export default function HomeScreen() {
 	const { theme } = useUnistyles();

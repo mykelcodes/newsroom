@@ -1,8 +1,10 @@
 import { Doc } from '@newsroom/backend/dataModel';
 import dayjs from 'dayjs';
+import { ReactNode } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { StyleSheet } from 'react-native-unistyles';
+import { useAnimatedTheme } from 'react-native-unistyles/reanimated';
 
 type NewsCardProps = Doc<'headlines'> & { onPress?: () => void; hideCategory?: boolean };
 
@@ -18,7 +20,7 @@ export function NewsCard({
 	return (
 		<Pressable onPress={onPress}>
 			{({ pressed }) => (
-				<Animated.View style={styles.container(pressed)}>
+				<NewsCardContainer pressed={pressed}>
 					<View style={styles.mainContent}>
 						<View style={styles.topContent}>
 							<View style={{ flex: 1 }}>
@@ -39,7 +41,7 @@ export function NewsCard({
 							{!hideCategory && <Text style={styles.category}>{category}</Text>}
 						</View>
 					</View>
-				</Animated.View>
+				</NewsCardContainer>
 			)}
 		</Pressable>
 	);
@@ -49,7 +51,7 @@ function Headline(props: NewsCardProps) {
 	return (
 		<Pressable onPress={props.onPress}>
 			{({ pressed }) => (
-				<Animated.View style={[styles.container(pressed)]}>
+				<NewsCardContainer pressed={pressed}>
 					{!!props.image && (
 						<Image source={{ uri: props.image }} resizeMode="cover" style={styles.image} />
 					)}
@@ -65,10 +67,19 @@ function Headline(props: NewsCardProps) {
 							<Text style={styles.category}>{props.category}</Text>
 						</View>
 					</View>
-				</Animated.View>
+				</NewsCardContainer>
 			)}
 		</Pressable>
 	);
+}
+
+function NewsCardContainer({ children, pressed }: { children: ReactNode; pressed: boolean }) {
+	const theme = useAnimatedTheme();
+	const themedStyle = useAnimatedStyle(() => ({
+		backgroundColor: theme.value.colors.background_primary
+	}));
+
+	return <Animated.View style={[styles.container(pressed), themedStyle]}>{children}</Animated.View>;
 }
 
 NewsCard.Headline = Headline;
@@ -76,7 +87,6 @@ NewsCard.Headline = Headline;
 const styles = StyleSheet.create((t) => ({
 	container: (pressed: boolean) => ({
 		borderRadius: 16,
-		backgroundColor: t.colors.background_primary,
 		overflow: 'hidden',
 		transitionProperty: ['transform'],
 		transitionDuration: 300,

@@ -1,14 +1,14 @@
+import { FullscreenLoader } from '#/components/FullscreenLoader';
+import { NewsCard } from '#/components/NewsCard';
+import { PAGINATION_LIMIT } from '#/lib/constants';
+import { openLink } from '#/lib/open-link';
+import { toTitleCase } from '#/lib/utils/string-utils';
 import { api } from '@newsroom/backend/api';
 import { usePaginatedQuery } from 'convex/react';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { ActivityIndicator, FlatList } from 'react-native';
 import { StyleSheet, useUnistyles } from 'react-native-unistyles';
-import { FullscreenLoader } from '../../components/FullscreenLoader';
-import { NewsCard } from '../../components/NewsCard';
-import { PAGINATION_LIMIT } from '../../lib/constants';
-import { openLink } from '../../lib/open-link';
-import { toTitleCase } from '../../lib/utils/string-utils';
 
 export default function NewsByCategoryScreen() {
 	const { theme } = useUnistyles();

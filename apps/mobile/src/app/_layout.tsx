@@ -1,11 +1,11 @@
-import '../unistyles';
+import '../../unistyles';
 
+import { isIOS, isIOS26Above, isIOS26Below } from '#/lib/platform';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
 import { useUnistyles } from 'react-native-unistyles';
-import { isIOS, isIOS26Above, isIOS26Below } from '../lib/platform';
 
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
 
