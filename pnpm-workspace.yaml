@@ -7,3 +7,9 @@ allowBuilds:
   workerd: true
   sharp: true
   esbuild: true
+
+minimumReleaseAgeExclude:
+  - 'expo'
+  - '@expo/*'
+  - 'expo-*'
+  - 'babel-preset-expo'
