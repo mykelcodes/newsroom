@@ -1,11 +1,11 @@
-import '../../unistyles';
+import '../global.css';
 
+import { useThemeVars } from '#/hooks/useThemeVars';
 import { isIOS, isIOS26Above, isIOS26Below } from '#/lib/platform';
 import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useColorScheme } from 'react-native';
-import { useUnistyles } from 'react-native-unistyles';
 
 const convexUrl = process.env.EXPO_PUBLIC_CONVEX_URL;
 
@@ -18,7 +18,7 @@ const convex = new ConvexReactClient(convexUrl, {
 });
 
 export default function RootLayout() {
-	const { theme } = useUnistyles();
+	const { colorForegroundPrimary } = useThemeVars();
 	const isDark = useColorScheme() === 'dark';
 
 	return (
@@ -32,7 +32,7 @@ export default function RootLayout() {
 						headerTransparent: isIOS,
 						headerBlurEffect: isIOS26Below ? 'light' : undefined,
 						scrollEdgeEffects: isIOS26Above ? { top: 'automatic' } : undefined,
-						headerTintColor: theme.colors.foreground_primary
+						headerTintColor: colorForegroundPrimary
 					}}
 				>
 					<Stack.Screen name="index" options={{ headerTitle: '', headerShown: isIOS26Above }} />

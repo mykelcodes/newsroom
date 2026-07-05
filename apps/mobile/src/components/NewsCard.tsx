@@ -2,9 +2,7 @@ import { Doc } from '@newsroom/backend/dataModel';
 import dayjs from 'dayjs';
 import { ReactNode } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { StyleSheet } from 'react-native-unistyles';
-import { useAnimatedTheme } from 'react-native-unistyles/reanimated';
+import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 
 type NewsCardProps = Doc<'headlines'> & { onPress?: () => void; hideCategory?: boolean };
 
@@ -21,24 +19,35 @@ export function NewsCard({
 		<Pressable onPress={onPress}>
 			{({ pressed }) => (
 				<NewsCardContainer pressed={pressed}>
-					<View style={styles.mainContent}>
-						<View style={styles.topContent}>
-							<View style={{ flex: 1 }}>
-								{!!sourceName && <Text style={styles.source}>{sourceName}</Text>}
-								<Text numberOfLines={4} style={styles.newsCardTitle}>
+					<View className="p-4">
+						<View className="flex-row items-start gap-2">
+							<View className="flex-1">
+								{!!sourceName && (
+									<Text className="text-foreground-primary font-sans text-sm uppercase">
+										{sourceName}
+									</Text>
+								)}
+								<Text
+									numberOfLines={4}
+									className="text-foreground-primary text-lg font-semibold tracking-[-0.2]"
+								>
 									{title}
 								</Text>
 							</View>
 
 							{!!image && (
-								<Image source={{ uri: image }} resizeMode="cover" style={styles.newsCardImage} />
+								<Image
+									source={{ uri: image }}
+									resizeMode="cover"
+									className="h-30 w-30 rounded-lg"
+								/>
 							)}
 						</View>
-						<View style={styles.footer}>
-							<Text style={styles.createdAt}>
+						<View className="mt-8 flex-row items-center justify-between">
+							<Text className="text-foreground-secondary text-xs">
 								{dayjs(publishedAt).format('MMM D, YYYY h:mm A')}
 							</Text>
-							{!hideCategory && <Text style={styles.category}>{category}</Text>}
+							{!hideCategory && <CategoryText category={category} />}
 						</View>
 					</View>
 				</NewsCardContainer>
@@ -53,18 +62,25 @@ function Headline(props: NewsCardProps) {
 			{({ pressed }) => (
 				<NewsCardContainer pressed={pressed}>
 					{!!props.image && (
-						<Image source={{ uri: props.image }} resizeMode="cover" style={styles.image} />
+						<Image source={{ uri: props.image }} resizeMode="cover" className="h-62.5 w-full" />
 					)}
-					<View style={styles.mainContent}>
-						{!!props.sourceName && <Text style={styles.source}>{props.sourceName}</Text>}
-						<Text style={styles.title} numberOfLines={3}>
+					<View className="p-4">
+						{!!props.sourceName && (
+							<Text className="text-foreground-primary font-sans text-sm uppercase">
+								{props.sourceName}
+							</Text>
+						)}
+						<Text
+							className="text-foreground-primary text-xl leading-7 font-bold tracking-[-0.2]"
+							numberOfLines={3}
+						>
 							{props.title}
 						</Text>
-						<View style={styles.footer}>
-							<Text style={styles.createdAt}>
+						<View className="mt-8 flex-row items-center justify-between">
+							<Text className="text-foreground-secondary text-xs">
 								{dayjs(props.publishedAt).format('MMM D, YYYY h:mm A')}
 							</Text>
-							<Text style={styles.category}>{props.category}</Text>
+							<CategoryText category={props.category} />
 						</View>
 					</View>
 				</NewsCardContainer>
@@ -74,72 +90,19 @@ function Headline(props: NewsCardProps) {
 }
 
 function NewsCardContainer({ children, pressed }: { children: ReactNode; pressed: boolean }) {
-	const theme = useAnimatedTheme();
-	const themedStyle = useAnimatedStyle(() => ({
-		backgroundColor: theme.value.colors.background_primary
+	const styles = useAnimatedStyle(() => ({
+		transform: [{ scale: withTiming(pressed ? 1.05 : 1, { duration: 300 }) }]
 	}));
 
-	return <Animated.View style={[styles.container(pressed), themedStyle]}>{children}</Animated.View>;
+	return (
+		<Animated.View className="bg-background-primary overflow-hidden rounded-2xl" style={styles}>
+			{children}
+		</Animated.View>
+	);
+}
+
+function CategoryText({ category }: { category: string }) {
+	return <Text className="text-accent text-xs font-semibold uppercase">{category}</Text>;
 }
 
 NewsCard.Headline = Headline;
-
-const styles = StyleSheet.create((t) => ({
-	container: (pressed: boolean) => ({
-		borderRadius: 16,
-		overflow: 'hidden',
-		transitionProperty: ['transform'],
-		transitionDuration: 300,
-		transform: [{ scale: pressed ? 1.05 : 1 }]
-	}),
-	source: {
-		fontFamily: 'Monoton-Regular',
-		textTransform: 'uppercase',
-		fontSize: 14,
-		color: t.colors.foreground_primary
-	},
-	mainContent: { padding: 16 },
-	topContent: {
-		flexDirection: 'row',
-		alignItems: 'flex-start',
-		gap: t.gap(2)
-	},
-	category: {
-		fontSize: 12,
-		color: t.colors.accent,
-		fontWeight: '600',
-		textTransform: 'uppercase'
-	},
-	newsCardImage: {
-		height: 120,
-		width: 120,
-		borderRadius: 8
-	},
-	newsCardTitle: {
-		color: t.colors.foreground_primary,
-		fontSize: 18,
-		letterSpacing: -0.2,
-		fontWeight: '600'
-	},
-	title: {
-		color: t.colors.foreground_primary,
-		fontSize: 20,
-		lineHeight: 28,
-		letterSpacing: -0.2,
-		fontWeight: '700'
-	},
-	footer: {
-		marginTop: t.gap(8),
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'space-between'
-	},
-	createdAt: {
-		fontSize: 12,
-		color: t.colors.foreground_secondary
-	},
-	image: {
-		width: '100%',
-		height: 250
-	}
-}));

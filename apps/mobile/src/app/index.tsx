@@ -8,14 +8,14 @@ import { Doc } from '@newsroom/backend/dataModel';
 import { usePaginatedQuery, useQuery } from 'convex/react';
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native';
-import { StyleSheet, useUnistyles } from 'react-native-unistyles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
-	const { theme } = useUnistyles();
 	const news = usePaginatedQuery(api.headlines.getAll, {}, { initialNumItems: 20 });
 	const categories = useQuery(api.categories.getAll);
 	const headline = news.results[0];
 	const results = news.results.slice(1);
+	const { bottom: paddingBottom, top } = useSafeAreaInsets();
 
 	if (news.status === 'LoadingFirstPage') {
 		return <FullscreenLoader />;
@@ -25,23 +25,25 @@ export default function HomeScreen() {
 		<FlatList
 			data={results}
 			renderItem={({ item }) => (
-				<View style={styles.itemWrapper}>
+				<View className="mb-4 px-4">
 					<NewsCard {...item} onPress={() => openLink(item.url)} />
 				</View>
 			)}
 			keyExtractor={(item) => item._id}
-			contentContainerStyle={styles.flatList}
+			contentContainerStyle={{ paddingBottom, paddingTop: top + SCREEN_TOP_PADDING }}
 			onEndReachedThreshold={0.7}
 			onEndReached={news.status === 'CanLoadMore' ? () => news.loadMore(20) : undefined}
 			ListFooterComponent={
 				news.status === 'LoadingMore' ? (
-					<ActivityIndicator color={theme.colors.accent} size="large" />
+					<ActivityIndicator colorClassName="accent-accent" size="large" />
 				) : null
 			}
 			ListHeaderComponent={<HeaderComponent headline={headline} categories={categories} />}
 		/>
 	);
 }
+
+const SCREEN_TOP_PADDING = 24;
 
 const HeaderComponent = ({
 	headline,
@@ -51,14 +53,14 @@ const HeaderComponent = ({
 	categories?: Doc<'categories'>[];
 }) => {
 	return (
-		<View style={styles.topSection}>
+		<View className="pb-4">
 			<Header />
 			<ScrollView
 				horizontal
 				showsHorizontalScrollIndicator={false}
-				contentContainerStyle={styles.categoriesScrollView}
+				contentContainerClassName="px-4 pb-8"
 			>
-				<View style={styles.categoriesContainer}>
+				<View className="flex-row items-center gap-4">
 					{categories?.map((c) => (
 						<ButtonChip
 							label={c.name}
@@ -69,27 +71,10 @@ const HeaderComponent = ({
 				</View>
 			</ScrollView>
 			{!!headline && (
-				<View style={styles.headlineContainer}>
+				<View className="px-4">
 					<NewsCard.Headline {...headline} onPress={() => openLink(headline.url)} />
 				</View>
 			)}
 		</View>
 	);
 };
-
-const styles = StyleSheet.create((t, rt) => ({
-	topSection: {
-		paddingBottom: t.gap(4)
-	},
-	flatList: {
-		paddingTop: t.gap(6) + rt.insets.top,
-		paddingBottom: rt.insets.bottom
-	},
-	itemWrapper: { paddingHorizontal: t.gap(4), marginBottom: t.gap(4) },
-	headlineContainer: { paddingHorizontal: t.gap(4) },
-	categoriesContainer: { flexDirection: 'row', alignItems: 'center', gap: t.gap(4) },
-	categoriesScrollView: {
-		paddingHorizontal: t.gap(4),
-		paddingBottom: t.gap(8)
-	}
-}));
