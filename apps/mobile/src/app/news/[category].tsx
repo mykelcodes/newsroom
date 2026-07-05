@@ -8,10 +8,8 @@ import { usePaginatedQuery } from 'convex/react';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useLayoutEffect } from 'react';
 import { ActivityIndicator, FlatList } from 'react-native';
-import { StyleSheet, useUnistyles } from 'react-native-unistyles';
 
 export default function NewsByCategoryScreen() {
-	const { theme } = useUnistyles();
 	const { category } = useLocalSearchParams<{ category: string }>();
 	const { results, status, loadMore } = usePaginatedQuery(
 		api.headlines.getByCategory,
@@ -39,19 +37,11 @@ export default function NewsByCategoryScreen() {
 			onEndReached={status === 'CanLoadMore' ? () => loadMore(PAGINATION_LIMIT) : undefined}
 			ListFooterComponent={
 				status === 'LoadingMore' ? (
-					<ActivityIndicator color={theme.colors.accent} size="large" />
+					<ActivityIndicator colorClassName="accent-accent" size="large" />
 				) : null
 			}
-			contentContainerStyle={styles.flatList}
+			contentContainerClassName="pt-4 px-4 gap-4"
 			contentInsetAdjustmentBehavior="automatic"
 		/>
 	);
 }
-
-const styles = StyleSheet.create((t) => ({
-	flatList: {
-		paddingTop: t.gap(4),
-		paddingHorizontal: t.gap(4),
-		gap: t.gap(4)
-	}
-}));

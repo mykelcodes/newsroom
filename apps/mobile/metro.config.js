@@ -1,6 +1,7 @@
 // Learn more: https://docs.expo.dev/guides/monorepos/
 const { getDefaultConfig } = require('expo/metro-config');
 const path = require('path');
+const { withUniwindConfig } = require('uniwind/metro');
 
 const projectRoot = __dirname;
 const workspaceRoot = path.resolve(projectRoot, '../..');
@@ -36,4 +37,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 	return context.resolveRequest(context, moduleName, platform);
 };
 
-module.exports = config;
+module.exports = withUniwindConfig(config, {
+	cssEntryFile: './src/global.css',
+	dtsFile: './src/uniwind-types.d.ts'
+});
