@@ -40,7 +40,7 @@ export default function NewsByCategoryScreen() {
 					<ActivityIndicator colorClassName="accent-accent" size="large" />
 				) : null
 			}
-			contentContainerClassName="pt-4 px-4 gap-4"
+			contentContainerClassName="pt-4 px-4 gap-4 android:gap-0 android:bg-background-primary"
 			contentInsetAdjustmentBehavior="automatic"
 		/>
 	);

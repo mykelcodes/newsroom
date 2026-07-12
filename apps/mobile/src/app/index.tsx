@@ -25,12 +25,13 @@ export default function HomeScreen() {
 		<FlatList
 			data={results}
 			renderItem={({ item }) => (
-				<View className="mb-4 px-4">
+				<View className="android:mb-0 mb-4 px-4">
 					<NewsCard {...item} onPress={() => openLink(item.url)} />
 				</View>
 			)}
 			keyExtractor={(item) => item._id}
 			contentContainerStyle={{ paddingBottom, paddingTop: top + SCREEN_TOP_PADDING }}
+			contentContainerClassName="android:bg-background-primary"
 			onEndReachedThreshold={0.7}
 			onEndReached={news.status === 'CanLoadMore' ? () => news.loadMore(20) : undefined}
 			ListFooterComponent={
@@ -53,7 +54,7 @@ const HeaderComponent = ({
 	categories?: Doc<'categories'>[];
 }) => {
 	return (
-		<View className="pb-4">
+		<View className="android:pb-0 pb-4">
 			<Header />
 			<ScrollView
 				horizontal

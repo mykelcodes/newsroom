@@ -1,10 +1,9 @@
-import { Doc } from '@newsroom/backend/dataModel';
 import dayjs from 'dayjs';
-import { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
-
-type NewsCardProps = Doc<'headlines'> & { onPress?: () => void; hideCategory?: boolean };
+import { CategoryText, HeadlineContent } from './NewsCard.components';
+import type { NewsCardProps } from './NewsCard.types';
 
 export function NewsCard({
 	title,
@@ -65,23 +64,12 @@ function Headline(props: NewsCardProps) {
 						<Image source={{ uri: props.image }} resizeMode="cover" className="h-62.5 w-full" />
 					)}
 					<View className="p-4">
-						{!!props.sourceName && (
-							<Text className="text-foreground-primary font-sans text-sm uppercase">
-								{props.sourceName}
-							</Text>
-						)}
-						<Text
-							className="text-foreground-primary text-xl leading-7 font-bold tracking-[-0.2]"
-							numberOfLines={3}
-						>
-							{props.title}
-						</Text>
-						<View className="mt-8 flex-row items-center justify-between">
-							<Text className="text-foreground-secondary text-xs">
-								{dayjs(props.publishedAt).format('MMM D, YYYY h:mm A')}
-							</Text>
-							<CategoryText category={props.category} />
-						</View>
+						<HeadlineContent
+							title={props.title}
+							category={props.category}
+							publishedAt={props.publishedAt}
+							sourceName={props.sourceName}
+						/>
 					</View>
 				</NewsCardContainer>
 			)}
@@ -99,10 +87,6 @@ function NewsCardContainer({ children, pressed }: { children: ReactNode; pressed
 			{children}
 		</Animated.View>
 	);
-}
-
-function CategoryText({ category }: { category: string }) {
-	return <Text className="text-accent text-xs font-semibold uppercase">{category}</Text>;
 }
 
 NewsCard.Headline = Headline;
