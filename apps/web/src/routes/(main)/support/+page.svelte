@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { siteMeta, siteUrl } from '$lib/seo';
 
-	const contactEmail = 'aymikey.olawale@gmail.com';
+	const contactEmail = 'mykelcodes@gmail.com';
 
 	const faqs = [
 		{
