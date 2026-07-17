@@ -1,106 +1,163 @@
 import { v } from 'convex/values';
-import type { Doc, Id } from './_generated/dataModel';
-import { internalMutation, type MutationCtx } from './_generated/server';
+import type { Doc } from './_generated/dataModel';
+import { internalMutation } from './_generated/server';
+import {
+	advanceCountryCycle,
+	FETCH_JOB_SPACING_MS,
+	getOrCreateGnewsFetchState
+} from './fetchCycle';
 import { headlineInputValidator, insertHeadlines } from './headlines';
 
-async function updateCategorySchedule(
-	ctx: MutationCtx,
-	categoryId: Id<'categories'>,
-	updates: { nextFetchAt: number; lastFetchedPage?: number }
-) {
-	const category = await ctx.db.get(categoryId);
-
-	if (!category) {
-		return;
-	}
-
-	await ctx.db.patch(categoryId, {
-		nextFetchAt: updates.nextFetchAt,
-		lastFetchedAt: Date.now(),
-		lastFetchedPage: updates.lastFetchedPage ?? category.lastFetchedPage
-	});
-}
+type FetchJobContext = {
+	category: Doc<'categories'>;
+	country: Doc<'countries'>;
+	lastFetchedPage: number;
+};
 
 /**
- * Marks the job in_progress and returns its category so the calling action
- * needs no separate lookup. Returns null (and fails the job) if the category
- * no longer exists.
+ * Marks a pending job in progress and returns all database-backed request
+ * context to the action. Legacy category-only jobs fail safely and age out.
  */
 export const startJob = internalMutation({
 	args: {
 		id: v.id('fetchJobs')
 	},
-	handler: async (ctx, args): Promise<Doc<'categories'> | null> => {
+	handler: async (ctx, args): Promise<FetchJobContext | null> => {
 		const job = await ctx.db.get(args.id);
 
-		if (!job) {
+		if (!job || job.status !== 'pending') {
 			return null;
 		}
 
-		const category = await ctx.db.get(job.categoryId);
-
-		if (!category) {
+		if (!job.countryId || !job.cycleId) {
 			await ctx.db.patch(args.id, {
 				status: 'failed',
-				error: `Category ${job.categoryId} no longer exists`,
+				error: 'Legacy fetch job has no country cycle',
 				fetchedAt: Date.now()
 			});
 			return null;
 		}
 
+		const [category, country, cycle, fetchState, progress] = await Promise.all([
+			ctx.db.get(job.categoryId),
+			ctx.db.get(job.countryId),
+			ctx.db.get(job.cycleId),
+			getOrCreateGnewsFetchState(ctx),
+			ctx.db
+				.query('countryCategoryFetchStates')
+				.withIndex('by_countryId_and_categoryId', (q) =>
+					q.eq('countryId', job.countryId!).eq('categoryId', job.categoryId)
+				)
+				.unique()
+		]);
+
+		if (
+			!category ||
+			!country ||
+			!cycle ||
+			cycle.status !== 'in_progress' ||
+			fetchState.activeCycleId !== cycle._id
+		) {
+			await ctx.db.patch(args.id, {
+				status: 'failed',
+				error: 'Fetch job no longer belongs to the active country cycle',
+				fetchedAt: Date.now()
+			});
+			return null;
+		}
+
+		const now = Date.now();
 		await ctx.db.patch(args.id, {
 			status: 'in_progress',
-			startedAt: Date.now(),
+			startedAt: now,
 			error: null,
-			fetchedAt: null
+			fetchedAt: null,
+			retryAt: undefined
+		});
+		await ctx.db.patch(fetchState._id, {
+			nextRequestAt: Math.max(fetchState.nextRequestAt, now + FETCH_JOB_SPACING_MS)
 		});
 
-		return category;
+		return {
+			category,
+			country,
+			lastFetchedPage: progress?.lastFetchedPage ?? 0
+		};
 	}
 });
 
 export const completeJob = internalMutation({
 	args: {
 		id: v.id('fetchJobs'),
-		categoryId: v.id('categories'),
 		headlines: v.array(headlineInputValidator),
-		nextFetchAt: v.number(),
 		fetchedPage: v.number()
 	},
 	handler: async (ctx, args) => {
+		const job = await ctx.db.get(args.id);
+
+		if (!job || job.status !== 'in_progress' || !job.countryId || !job.cycleId) {
+			return;
+		}
+
 		await insertHeadlines(ctx, args.headlines);
 
-		await updateCategorySchedule(ctx, args.categoryId, {
-			nextFetchAt: args.nextFetchAt,
-			lastFetchedPage: args.fetchedPage
-		});
+		const progress = await ctx.db
+			.query('countryCategoryFetchStates')
+			.withIndex('by_countryId_and_categoryId', (q) =>
+				q.eq('countryId', job.countryId!).eq('categoryId', job.categoryId)
+			)
+			.unique();
+		const now = Date.now();
+
+		if (progress) {
+			await ctx.db.patch(progress._id, {
+				lastFetchedAt: now,
+				lastFetchedPage: args.fetchedPage
+			});
+		} else {
+			await ctx.db.insert('countryCategoryFetchStates', {
+				countryId: job.countryId,
+				categoryId: job.categoryId,
+				lastFetchedAt: now,
+				lastFetchedPage: args.fetchedPage
+			});
+		}
 
 		await ctx.db.patch(args.id, {
 			status: 'completed',
-			fetchedAt: Date.now(),
+			fetchedAt: now,
 			dataLength: args.headlines.length,
 			fetchedPage: args.fetchedPage
 		});
+
+		await advanceCountryCycle(ctx, job, 'completed');
 	}
 });
 
 export const rateLimitJob = internalMutation({
 	args: {
 		id: v.id('fetchJobs'),
-		categoryId: v.id('categories'),
 		error: v.string(),
-		nextFetchAt: v.number()
+		retryAt: v.number()
 	},
 	handler: async (ctx, args) => {
-		// Keep lastFetchedPage where it is so the next successful fetch resumes
-		// from the page this one never got.
-		await updateCategorySchedule(ctx, args.categoryId, { nextFetchAt: args.nextFetchAt });
+		const job = await ctx.db.get(args.id);
+
+		if (!job || job.status !== 'in_progress') {
+			return;
+		}
 
 		await ctx.db.patch(args.id, {
 			status: 'rate_limited',
 			error: args.error,
 			fetchedAt: Date.now(),
-			dataLength: 0
+			dataLength: 0,
+			retryAt: args.retryAt
+		});
+
+		const fetchState = await getOrCreateGnewsFetchState(ctx);
+		await ctx.db.patch(fetchState._id, {
+			nextRequestAt: Math.max(fetchState.nextRequestAt, args.retryAt)
 		});
 	}
 });
@@ -109,21 +166,20 @@ export const failJob = internalMutation({
 	args: {
 		id: v.id('fetchJobs'),
 		error: v.string(),
-		categoryId: v.optional(v.id('categories')),
-		// Pushing nextFetchAt forward hands recovery to the retry cron; without
-		// it the enqueue cron would keep creating fresh jobs for a category
-		// whose schedule never advanced.
-		retryAt: v.optional(v.number())
+		retryAt: v.number()
 	},
 	handler: async (ctx, args) => {
-		if (args.categoryId && args.retryAt) {
-			await updateCategorySchedule(ctx, args.categoryId, { nextFetchAt: args.retryAt });
+		const job = await ctx.db.get(args.id);
+
+		if (!job || job.status !== 'in_progress') {
+			return;
 		}
 
 		await ctx.db.patch(args.id, {
 			status: 'failed',
 			error: args.error,
-			fetchedAt: Date.now()
+			fetchedAt: Date.now(),
+			retryAt: args.retryAt
 		});
 	}
 });

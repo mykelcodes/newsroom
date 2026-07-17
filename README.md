@@ -124,13 +124,14 @@ pnpm dev:mobile    # Expo (mobile)
 
 ## Convex Data Setup
 
-The scheduler reads enabled category documents from the `categories` table. Seed the standard GNews categories with:
+The scheduler reads enabled category and country documents. Seed the standard GNews categories and the initial GB/US countries with:
 
 ```sh
 pnpm --filter @newsroom/backend exec convex run seed:categories
+pnpm --filter @newsroom/backend exec convex run seed:countries
 ```
 
-The seed is idempotent: it only inserts categories that don't already exist, so it is safe to run against a deployment with hand-tuned rows. Categories become eligible for a fetch once `nextFetchAt` is at or before `Date.now()` (or was never set); tune `fetchIntervalSeconds` per category to stay inside your GNews quota.
+Both seeds are idempotent. The country seed also backfills scheduling defaults on legacy `{ code, name }` rows. The fetcher completes every enabled category for one due country before moving to the next due country, and persists page progress separately for each country/category pair. Country cycles default to six hours, keeping GB and US at about 72 scheduled requests per day before retries; tune `fetchIntervalSeconds` on country rows for your GNews plan.
 
 ## Available Scripts
 

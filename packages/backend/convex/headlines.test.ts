@@ -47,79 +47,136 @@ async function createCategory(t: Backend) {
 	});
 }
 
-async function createInProgressJob(t: Backend, categoryId: Id<'categories'>) {
+async function createCountry(t: Backend, code: 'gb' | 'us' = 'gb') {
 	return await t.run(async (ctx) => {
-		return await ctx.db.insert('fetchJobs', {
+		const countryId = await ctx.db.insert('countries', {
+			name: code === 'gb' ? 'United Kingdom' : 'United States',
+			code,
+			enabled: true,
+			fetchIntervalSeconds: 6 * 60 * 60
+		});
+		await ctx.db.insert('countryFetchStates', { countryId, nextFetchAt: Date.now() });
+		return countryId;
+	});
+}
+
+async function createInProgressJob(
+	t: Backend,
+	categoryId: Id<'categories'>,
+	countryId: Id<'countries'>
+) {
+	return await t.run(async (ctx) => {
+		const cycleId = await ctx.db.insert('countryFetchCycles', {
+			countryId,
+			status: 'in_progress',
+			startedAt: Date.now(),
+			totalCategories: 1,
+			completedCategories: 0,
+			failedCategories: 0
+		});
+		const fetchState = await ctx.db
+			.query('gnewsFetchStates')
+			.withIndex('by_key', (q) => q.eq('key', 'gnews'))
+			.unique();
+		if (fetchState) {
+			await ctx.db.patch(fetchState._id, {
+				activeCycleId: cycleId,
+				lastCompletedCategoryCode: undefined
+			});
+		} else {
+			await ctx.db.insert('gnewsFetchStates', {
+				key: 'gnews',
+				activeCycleId: cycleId,
+				nextRequestAt: 0
+			});
+		}
+
+		const jobId = await ctx.db.insert('fetchJobs', {
 			categoryId,
+			countryId,
+			cycleId,
 			status: 'in_progress',
 			startedAt: Date.now(),
 			error: null,
 			fetchedAt: null
 		});
+
+		return { jobId, cycleId };
 	});
 }
 
-test('completeJob stores headlines, advances the schedule, and completes the job', async () => {
+test('completeJob stores headlines and country/category page progress', async () => {
 	const t = setup();
 	const categoryId = await createCategory(t);
-	const jobId = await createInProgressJob(t, categoryId);
-	const nextFetchAt = Date.now() + 3600 * 1000;
+	const countryId = await createCountry(t);
+	const { jobId, cycleId } = await createInProgressJob(t, categoryId, countryId);
 
 	await t.mutation(internal.fetchJobs.completeJob, {
 		id: jobId,
-		categoryId,
 		headlines: [makeHeadline(), makeHeadline({ externalId: 'ext-2', title: 'Another' })],
-		nextFetchAt,
 		fetchedPage: 2
 	});
 
 	const headlines = await t.run(async (ctx) => await ctx.db.query('headlines').collect());
 	expect(headlines).toHaveLength(2);
 
-	const category = await t.run(async (ctx) => await ctx.db.get(categoryId));
-	expect(category).toMatchObject({ nextFetchAt, lastFetchedPage: 2 });
+	const progress = await t.run(async (ctx) =>
+		ctx.db
+			.query('countryCategoryFetchStates')
+			.withIndex('by_countryId_and_categoryId', (q) =>
+				q.eq('countryId', countryId).eq('categoryId', categoryId)
+			)
+			.unique()
+	);
+	expect(progress).toMatchObject({ countryId, categoryId, lastFetchedPage: 2 });
 
+	const cycle = await t.run(async (ctx) => await ctx.db.get(cycleId));
+	expect(cycle).toMatchObject({ status: 'completed', completedCategories: 1 });
 	const job = await t.run(async (ctx) => await ctx.db.get(jobId));
 	expect(job).toMatchObject({ status: 'completed', dataLength: 2, fetchedPage: 2 });
 });
 
-test('completeJob dedupes headlines by externalId', async () => {
+test('headline deduplication is scoped by country', async () => {
 	const t = setup();
 	const categoryId = await createCategory(t);
-	const jobId = await createInProgressJob(t, categoryId);
+	const gbId = await createCountry(t, 'gb');
+	const first = await createInProgressJob(t, categoryId, gbId);
 
 	await t.mutation(internal.fetchJobs.completeJob, {
-		id: jobId,
-		categoryId,
-		headlines: [makeHeadline(), makeHeadline({ title: 'Same id, different title' })],
-		nextFetchAt: Date.now(),
+		id: first.jobId,
+		headlines: [makeHeadline(), makeHeadline({ title: 'Same id, same country' })],
 		fetchedPage: 1
 	});
 
-	const secondJobId = await createInProgressJob(t, categoryId);
+	const second = await createInProgressJob(t, categoryId, gbId);
 	await t.mutation(internal.fetchJobs.completeJob, {
-		id: secondJobId,
-		categoryId,
+		id: second.jobId,
 		headlines: [makeHeadline({ title: 'Refetched' })],
-		nextFetchAt: Date.now(),
 		fetchedPage: 2
 	});
 
+	const usId = await createCountry(t, 'us');
+	const usJob = await createInProgressJob(t, categoryId, usId);
+	await t.mutation(internal.fetchJobs.completeJob, {
+		id: usJob.jobId,
+		headlines: [makeHeadline({ country: 'us', title: 'US copy' })],
+		fetchedPage: 1
+	});
+
 	const headlines = await t.run(async (ctx) => await ctx.db.query('headlines').collect());
-	expect(headlines).toHaveLength(1);
-	expect(headlines[0].title).toBe('A headline');
+	expect(headlines).toHaveLength(2);
+	expect(headlines.map((headline) => headline.country).sort()).toEqual(['gb', 'us']);
 });
 
 test('completeJob normalizes publishedAt to ISO-8601 UTC', async () => {
 	const t = setup();
 	const categoryId = await createCategory(t);
-	const jobId = await createInProgressJob(t, categoryId);
+	const countryId = await createCountry(t);
+	const { jobId } = await createInProgressJob(t, categoryId, countryId);
 
 	await t.mutation(internal.fetchJobs.completeJob, {
 		id: jobId,
-		categoryId,
 		headlines: [makeHeadline({ publishedAt: '2026-07-12T10:30:00+02:00' })],
-		nextFetchAt: Date.now(),
 		fetchedPage: 1
 	});
 
@@ -127,31 +184,10 @@ test('completeJob normalizes publishedAt to ISO-8601 UTC', async () => {
 	expect(headline.publishedAt).toBe('2026-07-12T08:30:00.000Z');
 });
 
-test('failJob pushes the category schedule forward so enqueue does not pile on', async () => {
-	const t = setup();
-	const categoryId = await createCategory(t);
-	const jobId = await createInProgressJob(t, categoryId);
-	const retryAt = Date.now() + 30 * 60 * 1000;
-
-	await t.mutation(internal.fetchJobs.failJob, {
-		id: jobId,
-		error: 'boom',
-		categoryId,
-		retryAt
-	});
-
-	const job = await t.run(async (ctx) => await ctx.db.get(jobId));
-	expect(job).toMatchObject({ status: 'failed', error: 'boom' });
-
-	const category = await t.run(async (ctx) => await ctx.db.get(categoryId));
-	expect(category?.nextFetchAt).toBe(retryAt);
-});
-
 test('getAll filters by category code', async () => {
 	const t = setup();
 	await t.run(async (ctx) => {
-		const base = makeHeadline();
-		await ctx.db.insert('headlines', base);
+		await ctx.db.insert('headlines', makeHeadline());
 		await ctx.db.insert('headlines', {
 			...makeHeadline({ externalId: 'ext-2', category: 'sports' })
 		});
@@ -170,30 +206,36 @@ test('getAll filters by category code', async () => {
 	expect(sportsOnly.page[0].category).toBe('sports');
 });
 
-test('categories.getAll does not leak fetch-scheduling fields', async () => {
+test('category and country queries hide fetch scheduling fields', async () => {
 	const t = setup();
 	await createCategory(t);
+	await createCountry(t);
 
 	const categories = await t.query(api.categories.getAll, {});
+	const countries = await t.query(api.countries.getAll, {});
 
-	expect(categories).toHaveLength(1);
-	expect(categories[0]).toMatchObject({ name: 'Technology', code: 'technology', enabled: true });
+	expect(categories[0]).toMatchObject({
+		name: 'Technology',
+		code: 'technology',
+		enabled: true
+	});
 	expect(categories[0]).not.toHaveProperty('nextFetchAt');
-	expect(categories[0]).not.toHaveProperty('lastFetchedPage');
-	expect(categories[0]).not.toHaveProperty('fetchIntervalSeconds');
+	expect(countries[0]).toMatchObject({
+		name: 'United Kingdom',
+		code: 'gb',
+		enabled: true
+	});
+	expect(countries[0]).not.toHaveProperty('fetchIntervalSeconds');
 });
 
 test('seed:categories is idempotent', async () => {
 	const t = setup();
 
-	const first = await t.mutation(internal.seed.categories, {});
-	expect(first).toEqual({ inserted: 9, skipped: 0 });
+	expect(await t.mutation(internal.seed.categories, {})).toEqual({ inserted: 9, skipped: 0 });
+	expect(await t.mutation(internal.seed.categories, {})).toEqual({ inserted: 0, skipped: 9 });
 
-	const second = await t.mutation(internal.seed.categories, {});
-	expect(second).toEqual({ inserted: 0, skipped: 9 });
-
-	const categories: Doc<'categories'>[] = await t.run(
-		async (ctx) => await ctx.db.query('categories').collect()
+	const categories: Doc<'categories'>[] = await t.run(async (ctx) =>
+		ctx.db.query('categories').collect()
 	);
 	expect(categories).toHaveLength(9);
 });
