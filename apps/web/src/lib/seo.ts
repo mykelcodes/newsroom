@@ -13,7 +13,7 @@ export function buildHomeJsonLd(
 	articles: Doc<'headlines'>[],
 	featuredArticle?: Doc<'headlines'>
 ): string {
-	return JSON.stringify({
+	return jsonLdStringify({
 		'@context': 'https://schema.org',
 		'@type': 'WebPage',
 		name: siteMeta.title,
@@ -47,4 +47,11 @@ export function buildHomeJsonLd(
 			}
 		}))
 	});
+}
+
+// This string is injected into a <script> tag via {@html}. Escaping "<"
+// keeps external article content (titles, descriptions) from closing the tag
+// and injecting markup.
+function jsonLdStringify(value: unknown): string {
+	return JSON.stringify(value).replace(/</g, '\\u003c');
 }

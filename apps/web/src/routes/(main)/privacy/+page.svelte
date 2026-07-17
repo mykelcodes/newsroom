@@ -46,17 +46,17 @@
 		<div class="legal-inner prose">
 			<p>
 				Newsroom (“we”, “us”, or “the app”) is a free news reader that brings you the UK’s top
-				headlines. This policy explains what data is and isn’t handled when you use the
-				Newsroom mobile app or website (together, the “Service”). The short version: we don’t require
-				an account, we don’t ask you for personal information, and we don’t track you.
+				headlines. This policy explains what data is and isn’t handled when you use the Newsroom
+				mobile app or website (together, the “Service”). The short version: we don’t require an
+				account, we don’t ask you for personal information, and we don’t track you.
 			</p>
 
 			<h2>Information we do not collect</h2>
 			<p>
 				The Service has no sign-up, login, or user accounts. We do not ask for, and you do not
-				provide, personal information such as your name, email address, phone number, or contacts. We
-				do not collect your precise location, and we do not access your camera, microphone, photos,
-				or other device data.
+				provide, personal information such as your name, email address, phone number, or contacts.
+				We do not collect your precise location, and we do not access your camera, microphone,
+				photos, or other device data.
 			</p>
 
 			<h2>Information processed automatically</h2>
@@ -71,9 +71,9 @@
 
 			<h2>No tracking, ads, or analytics SDKs</h2>
 			<p>
-				Newsroom does not include third-party advertising, analytics, or tracking software. We do not
-				use cookies for advertising, and we do not sell, rent, or share your information with data
-				brokers or advertisers.
+				Newsroom does not include third-party advertising, analytics, or tracking software. We do
+				not use cookies for advertising, and we do not sell, rent, or share your information with
+				data brokers or advertisers.
 			</p>
 
 			<h2>Reading articles and external links</h2>
@@ -92,14 +92,14 @@
 			</p>
 			<ul>
 				<li>
-					<strong>Convex</strong> — backend and database that stores news content and serves it to
-					the app.
+					<strong>Convex</strong> — backend and database that stores news content and serves it to the
+					app.
 				</li>
 				<li><strong>Cloudflare</strong> — hosting and delivery of the website.</li>
 				<li><strong>GNews</strong> — source of the news headlines and article metadata.</li>
 				<li>
-					<strong>Apple</strong> — distribution of the iOS app via the App Store, including any
-					aggregated, anonymized analytics or crash reports Apple may provide to us by default.
+					<strong>Apple</strong> — distribution of the iOS app via the App Store, including any aggregated,
+					anonymized analytics or crash reports Apple may provide to us by default.
 				</li>
 			</ul>
 
@@ -112,15 +112,15 @@
 
 			<h2>Your choices</h2>
 			<p>
-				Since we don’t collect personal information or maintain accounts, there is no personal profile
-				to access, correct, or delete. You can stop all data processing by us at any time by not using
-				the Service or by uninstalling the app.
+				Since we don’t collect personal information or maintain accounts, there is no personal
+				profile to access, correct, or delete. You can stop all data processing by us at any time by
+				not using the Service or by uninstalling the app.
 			</p>
 
 			<h2>Changes to this policy</h2>
 			<p>
-				We may update this policy from time to time. When we do, we’ll revise the “Last updated” date
-				above. Significant changes will be reflected on this page.
+				We may update this policy from time to time. When we do, we’ll revise the “Last updated”
+				date above. Significant changes will be reflected on this page.
 			</p>
 
 			<h2>Contact us</h2>

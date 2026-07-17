@@ -72,15 +72,15 @@
 	<section class="legal-body">
 		<div class="legal-inner prose">
 			<p>
-				Need a hand with Newsroom, found a bug, or have a suggestion? You’re in the right place. Check
-				the common questions below, and if you still need help, reach out any time.
+				Need a hand with Newsroom, found a bug, or have a suggestion? You’re in the right place.
+				Check the common questions below, and if you still need help, reach out any time.
 			</p>
 
 			<div class="contact-card">
 				<h2>Contact us</h2>
 				<p>
-					Email <a href="mailto:{contactEmail}">{contactEmail}</a> and we’ll get back to you as soon
-					as we can.
+					Email <a href="mailto:{contactEmail}">{contactEmail}</a> and we’ll get back to you as soon as
+					we can.
 				</p>
 			</div>
 
@@ -94,8 +94,8 @@
 
 			<h2>More</h2>
 			<p>
-				Read our <a href={resolve('/privacy')}>Privacy Policy</a> to learn how Newsroom handles your
-				data. (Short version: we don’t collect personal information and we don’t track you.)
+				Read our <a href={resolve('/privacy')}>Privacy Policy</a> to learn how Newsroom handles your data.
+				(Short version: we don’t collect personal information and we don’t track you.)
 			</p>
 		</div>
 	</section>

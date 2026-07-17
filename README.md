@@ -7,16 +7,15 @@ The repository is public, so configuration examples use placeholder values only.
 ## What It Does
 
 - Fetches GNews top headlines by enabled category.
-- Stores normalized headline/article records in Convex.
-- Deduplicates headlines by external article ID.
-- Tracks fetch jobs with `pending`, `in_progress`, `completed`, and `failed` states.
-- Retries failed fetch jobs on a cron schedule.
+- Stores normalized headline records in Convex (publish dates normalized to ISO-8601 UTC, deduplicated by external article ID).
+- Tracks fetch jobs with `pending`, `in_progress`, `completed`, `failed`, and `rate_limited` states.
+- Retries failed fetch jobs on a cron schedule with a capped attempt count, recovers jobs stuck `pending`/`in_progress`, and never enqueues a category that already has an active job.
+- Backs off on upstream rate limits (an hour on 429, until midnight on 403) and pushes a failing category's schedule forward so the enqueue cron cannot pile on duplicate jobs.
+- Cleans up terminal job records older than seven days via a daily cron.
 - Spaces scheduled fetch actions apart to reduce bursty upstream API traffic.
-- Provides Convex queries for listing headlines and reading headlines by category/language.
-- Presents a responsive newsroom homepage with a masthead, category navigation, hero collage, latest news, video highlights, popular stories, and footer newsletter form.
+- Provides Convex queries for listing headlines, optionally filtered by category.
+- Presents a responsive newsroom homepage (masthead, category navigation, hero collage, latest news, popular stories, newsletter footer) server-rendered from Convex data and kept live on the client with `convex-svelte`.
 - Supports a light/dark UI theme toggle with the selected theme stored in local storage.
-
-The homepage currently uses static editorial data and image assets in `src/routes/+page.svelte` and `static/newsroom`. The Convex headline queries are available for wiring live data into the UI as the product evolves.
 
 ## Tech Stack
 
@@ -125,22 +124,13 @@ pnpm dev:mobile    # Expo (mobile)
 
 ## Convex Data Setup
 
-The scheduler reads enabled category documents from the `categories` table. Category documents need these fields:
+The scheduler reads enabled category documents from the `categories` table. Seed the standard GNews categories with:
 
-```ts
-{
-	name: string;
-	code: string;
-	enabled: boolean;
-	description: string | null;
-	fetchIntervalSeconds: number;
-	lastFetchedPage: number;
-	nextFetchAt?: number;
-	lastFetchedAt?: number;
-}
+```sh
+pnpm --filter @newsroom/backend exec convex run seed:categories
 ```
 
-Set `nextFetchAt` to a timestamp at or before `Date.now()` when you want a category to be eligible for the next scheduled fetch.
+The seed is idempotent: it only inserts categories that don't already exist, so it is safe to run against a deployment with hand-tuned rows. Categories become eligible for a fetch once `nextFetchAt` is at or before `Date.now()` (or was never set); tune `fetchIntervalSeconds` per category to stay inside your GNews quota.
 
 ## Available Scripts
 
@@ -155,8 +145,11 @@ pnpm build:web       # Build the SvelteKit app for Cloudflare
 pnpm convex:deploy   # Deploy Convex functions
 pnpm check           # Run checks across all packages
 pnpm lint            # Lint across all packages
+pnpm test            # Run tests across all packages (backend: vitest + convex-test)
 pnpm format          # Format the repository
 ```
+
+CI (GitHub Actions, `.github/workflows/ci.yml`) runs lint, check, and test on pushes to `main` and on pull requests.
 
 Per-package commands use pnpm filters, e.g. `pnpm --filter web preview`,
 `pnpm --filter @newsroom/backend deploy`, or `pnpm --filter mobile ios`.
@@ -178,11 +171,11 @@ The staged UI is a static, responsive newsroom landing page composed from files 
 - `Header.svelte` provides the top bar, social links, category drawer, primary navigation, search button, and theme toggle.
 - `Hero.svelte` renders the oversized NEWSROOM masthead, category ticker, and image collage.
 - `FeaturedArticle.svelte`, `ArticleGrid.svelte`, and `ArticleCard.svelte` render the latest-news feature and supporting cards.
-- `EditorialBand.svelte`, `VideoGrid.svelte`, and `PopularNews.svelte` add the editorial image band, video highlights, and popular-story list.
+- `EditorialBand.svelte` and `PopularNews.svelte` add the editorial image band and popular-story list.
 - `Footer.svelte` includes newsletter signup, footer navigation, social links, and a back-to-top link.
 
-The UI is not yet connected to live Convex headline data. Article content in `src/routes/+page.svelte` is sample content used to compose and style the page.
+Pages are server-rendered from Convex via `+layout.server.ts`/`+page.server.ts` loads, then hydrated into live `convex-svelte` queries on the client. The hero collage images in `static/newsroom` are the only static editorial assets.
 
 ## Current Status
 
-Newsroom is an early-stage project. The backend ingestion model is in active development, and the SvelteKit frontend has a polished static landing page ready to be connected to live Convex data.
+Newsroom is an early-stage project: the GNews ingestion pipeline, the SvelteKit web app, and the Expo mobile app all run against the same live Convex backend, with tests covering the scheduler and ingestion paths.

@@ -1,6 +1,6 @@
 import { paginationOptsValidator } from 'convex/server';
-import { v } from 'convex/values';
-import { internalMutation, query } from './_generated/server';
+import { v, type Infer } from 'convex/values';
+import { query, type MutationCtx } from './_generated/server';
 
 export const getAll = query({
 	args: {
@@ -24,6 +24,19 @@ export const getAll = query({
 	}
 });
 
+export const getLatest = query({
+	args: {
+		count: v.optional(v.number())
+	},
+	handler: async (ctx, { count = 4 }) => {
+		return await ctx.db.query('headlines').withIndex('by_publishedAt').order('desc').take(count);
+	}
+});
+
+/**
+ * @deprecated Released mobile builds still call this; new code should use
+ * getAll with categoryCode. Remove once those clients are off the market.
+ */
 export const getByCategory = query({
 	args: {
 		category: v.string(),
@@ -38,34 +51,7 @@ export const getByCategory = query({
 	}
 });
 
-export const getLatest = query({
-	args: {
-		count: v.optional(v.number())
-	},
-	handler: async (ctx, { count = 4 }) => {
-		return await ctx.db.query('headlines').withIndex('by_publishedAt').order('desc').take(count);
-	}
-});
-
-export const getFeatured = query({
-	args: {
-		poolSize: v.optional(v.number())
-	},
-	handler: async (ctx, { poolSize = 10 }) => {
-		const recent = await ctx.db
-			.query('headlines')
-			.withIndex('by_publishedAt')
-			.order('desc')
-			.take(poolSize);
-
-		if (recent.length === 0) return null;
-
-		const index = Math.floor(Math.random() * recent.length);
-		return recent[index];
-	}
-});
-
-const addHeadlineValidator = v.object({
+export const headlineInputValidator = v.object({
 	externalId: v.string(),
 	title: v.string(),
 	description: v.string(),
@@ -81,18 +67,34 @@ const addHeadlineValidator = v.object({
 	sourceUrl: v.string()
 });
 
-export const add = internalMutation({
-	args: addHeadlineValidator,
-	handler: async (ctx, data) => {
+export type HeadlineInput = Infer<typeof headlineInputValidator>;
+
+// The by_publishedAt indexes sort lexicographically, so every stored value must
+// use the same ISO-8601 UTC format regardless of what the upstream API returns.
+function normalizePublishedAt(publishedAt: string) {
+	const timestamp = Date.parse(publishedAt);
+	return Number.isNaN(timestamp) ? publishedAt : new Date(timestamp).toISOString();
+}
+
+export async function insertHeadlines(ctx: MutationCtx, headlines: HeadlineInput[]) {
+	let inserted = 0;
+
+	for (const headline of headlines) {
 		const existing = await ctx.db
 			.query('headlines')
-			.withIndex('by_externalId', (q) => q.eq('externalId', data.externalId))
+			.withIndex('by_externalId', (q) => q.eq('externalId', headline.externalId))
 			.first();
 
 		if (existing) {
-			return existing._id;
+			continue;
 		}
 
-		return await ctx.db.insert('headlines', data);
+		await ctx.db.insert('headlines', {
+			...headline,
+			publishedAt: normalizePublishedAt(headline.publishedAt)
+		});
+		inserted++;
 	}
-});
+
+	return inserted;
+}
