@@ -192,7 +192,7 @@ importers:
         specifier: ^5.0.0
         version: 5.0.0
       '@types/node':
-        specifier: 26.1.0
+        specifier: ^26.1.0
         version: 26.1.0
       convex-test:
         specifier: ^0.0.54
