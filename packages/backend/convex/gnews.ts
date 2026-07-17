@@ -1,10 +1,8 @@
 import { v } from 'convex/values';
 import { internal } from './_generated/api';
-import type { Doc } from './_generated/dataModel';
 import { internalAction } from './_generated/server';
 import type { HeadlineInput } from './headlines';
 
-const DEFAULT_COUNTRY = 'gb';
 const DEFAULT_LANG = 'en';
 // GNews caps top-headlines usefully at the first few pages; rotate through
 // them so successive fetches cover more than the first 10 stories.
@@ -18,14 +16,16 @@ export const getLatestHeadlines = internalAction({
 		jobId: v.id('fetchJobs')
 	},
 	handler: async (ctx, args) => {
-		const category: Doc<'categories'> | null = await ctx.runMutation(internal.fetchJobs.startJob, {
+		const jobContext = await ctx.runMutation(internal.fetchJobs.startJob, {
 			id: args.jobId
 		});
 
-		if (!category) {
-			console.warn(`Fetch job ${args.jobId} skipped: category ${args.categoryId} not found`);
+		if (!jobContext) {
+			console.warn(`Fetch job ${args.jobId} skipped because it is no longer pending`);
 			return;
 		}
+
+		const { category, country, lastFetchedPage } = jobContext;
 
 		try {
 			const apiKey = process.env.GNEWS_API_KEY;
@@ -35,13 +35,12 @@ export const getLatestHeadlines = internalAction({
 			}
 
 			const fromDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-			const nextPage =
-				category.lastFetchedPage >= MAX_HEADLINE_PAGES ? 1 : category.lastFetchedPage + 1;
+			const nextPage = lastFetchedPage >= MAX_HEADLINE_PAGES ? 1 : lastFetchedPage + 1;
 
 			const url = new URL('https://gnews.io/api/v4/top-headlines');
 			url.searchParams.set('category', category.code);
 			url.searchParams.set('apikey', apiKey);
-			url.searchParams.set('country', DEFAULT_COUNTRY);
+			url.searchParams.set('country', country.code);
 			url.searchParams.set('from', fromDate);
 			url.searchParams.set('lang', DEFAULT_LANG);
 			url.searchParams.set('page', nextPage.toString());
@@ -50,16 +49,15 @@ export const getLatestHeadlines = internalAction({
 
 			if (res.status === 429 || res.status === 403) {
 				const body = await res.text();
-				const message = `Rate limited or access denied when fetching headlines for category ${category.name}: ${res.status} ${res.statusText} ${body}`;
+				const message = `Rate limited or access denied when fetching ${category.name} headlines for ${country.name}: ${res.status} ${res.statusText} ${body}`;
 				console.warn(message);
 
 				await ctx.runMutation(internal.fetchJobs.rateLimitJob, {
 					id: args.jobId,
-					categoryId: category._id,
 					error: message,
 					// 403 means the daily quota is spent: wait for the reset at
 					// midnight. 429 is transient throttling: back off an hour.
-					nextFetchAt: res.status === 403 ? nextDayMidnight() : Date.now() + RATE_LIMIT_BACKOFF_MS
+					retryAt: res.status === 403 ? nextUtcMidnight() : Date.now() + RATE_LIMIT_BACKOFF_MS
 				});
 				return;
 			}
@@ -67,7 +65,7 @@ export const getLatestHeadlines = internalAction({
 			if (!res.ok) {
 				const body = await res.text();
 				throw new Error(
-					`Failed to fetch latest headlines for category ${category.name}: ${res.status} ${res.statusText} ${body}`
+					`Failed to fetch ${category.name} headlines for ${country.name}: ${res.status} ${res.statusText} ${body}`
 				);
 			}
 
@@ -83,7 +81,7 @@ export const getLatestHeadlines = internalAction({
 				publishedAt: article.publishedAt,
 				lang: article.lang,
 				category: category.code,
-				country: DEFAULT_COUNTRY,
+				country: country.code,
 				sourceId: article.source.id,
 				sourceName: article.source.name,
 				sourceUrl: article.source.url
@@ -91,27 +89,23 @@ export const getLatestHeadlines = internalAction({
 
 			await ctx.runMutation(internal.fetchJobs.completeJob, {
 				id: args.jobId,
-				categoryId: category._id,
 				headlines,
-				nextFetchAt: Date.now() + category.fetchIntervalSeconds * 1000,
 				fetchedPage: nextPage
 			});
 		} catch (error) {
-			console.error(`Error fetching headlines for category ${category.name}:`, error);
+			console.error(`Error fetching ${category.name} headlines for ${country.name}:`, error);
 			await ctx.runMutation(internal.fetchJobs.failJob, {
 				id: args.jobId,
 				error: error instanceof Error ? error.message : String(error),
-				categoryId: category._id,
-				retryAt: Date.now() + Math.max(category.fetchIntervalSeconds * 1000, FAILURE_BACKOFF_MS)
+				retryAt: Date.now() + FAILURE_BACKOFF_MS
 			});
 		}
 	}
 });
 
-function nextDayMidnight() {
+function nextUtcMidnight() {
 	const now = new Date();
-	const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0);
-	return nextMidnight.getTime();
+	return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
 }
 
 type APIResponse = {

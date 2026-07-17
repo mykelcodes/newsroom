@@ -1,9 +1,9 @@
 import { internalMutation } from './_generated/server';
+import { DEFAULT_COUNTRY_FETCH_INTERVAL_SECONDS, getOrCreateCountryFetchState } from './fetchCycle';
 
-// GNews top-headlines categories. 9 categories at a 4-hour interval is ~54
-// requests/day, safely inside the free tier's 100/day quota.
+// Kept on category rows for compatibility with existing deployments. Country
+// cycles now own the active schedule.
 const DEFAULT_FETCH_INTERVAL_SECONDS = 4 * 60 * 60;
-
 const GNEWS_CATEGORIES = [
 	{ name: 'General', code: 'general' },
 	{ name: 'World', code: 'world' },
@@ -14,6 +14,11 @@ const GNEWS_CATEGORIES = [
 	{ name: 'Sports', code: 'sports' },
 	{ name: 'Science', code: 'science' },
 	{ name: 'Health', code: 'health' }
+];
+
+const GNEWS_COUNTRIES = [
+	{ name: 'United Kingdom', code: 'gb' },
+	{ name: 'United States', code: 'us' }
 ];
 
 /**
@@ -50,5 +55,49 @@ export const categories = internalMutation({
 		}
 
 		return { inserted, skipped: GNEWS_CATEGORIES.length - inserted };
+	}
+});
+
+/**
+ * Seeds the countries used by the country/category fetch loop and initializes
+ * their independent schedules.
+ *
+ * Run with: pnpm exec convex run seed:countries
+ */
+export const countries = internalMutation({
+	args: {},
+	handler: async (ctx) => {
+		let inserted = 0;
+		const now = Date.now();
+
+		for (const country of GNEWS_COUNTRIES) {
+			const existing = await ctx.db
+				.query('countries')
+				.withIndex('by_code', (q) => q.eq('code', country.code))
+				.unique();
+
+			const countryId =
+				existing?._id ??
+				(await ctx.db.insert('countries', {
+					name: country.name,
+					code: country.code,
+					enabled: true,
+					fetchIntervalSeconds: DEFAULT_COUNTRY_FETCH_INTERVAL_SECONDS
+				}));
+
+			if (!existing) {
+				inserted++;
+			} else if (existing.enabled === undefined || existing.fetchIntervalSeconds === undefined) {
+				await ctx.db.patch(existing._id, {
+					enabled: existing.enabled ?? true,
+					fetchIntervalSeconds:
+						existing.fetchIntervalSeconds ?? DEFAULT_COUNTRY_FETCH_INTERVAL_SECONDS
+				});
+			}
+
+			await getOrCreateCountryFetchState(ctx, countryId, now);
+		}
+
+		return { inserted, skipped: GNEWS_COUNTRIES.length - inserted };
 	}
 });

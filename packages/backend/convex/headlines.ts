@@ -82,7 +82,9 @@ export async function insertHeadlines(ctx: MutationCtx, headlines: HeadlineInput
 	for (const headline of headlines) {
 		const existing = await ctx.db
 			.query('headlines')
-			.withIndex('by_externalId', (q) => q.eq('externalId', headline.externalId))
+			.withIndex('by_externalId_and_country', (q) =>
+				q.eq('externalId', headline.externalId).eq('country', headline.country)
+			)
 			.first();
 
 		if (existing) {
