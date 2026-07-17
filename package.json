@@ -14,6 +14,7 @@
 		"convex:deploy": "pnpm --filter @newsroom/backend run deploy",
 		"check": "pnpm -r --if-present check",
 		"lint": "pnpm -r --if-present lint",
+		"test": "pnpm -r --if-present test",
 		"format": "prettier --write ."
 	},
 	"devDependencies": {

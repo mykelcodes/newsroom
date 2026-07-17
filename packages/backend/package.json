@@ -13,9 +13,17 @@
 	"scripts": {
 		"dev": "convex dev",
 		"deploy": "convex deploy",
-		"build": "convex build"
+		"build": "convex build",
+		"test": "vitest run"
 	},
 	"dependencies": {
 		"convex": "1.42.1"
+	},
+	"devDependencies": {
+		"@edge-runtime/vm": "^5.0.0",
+		"@types/node": "26.1.0",
+		"convex-test": "^0.0.54",
+		"vite": "8.1.3",
+		"vitest": "^4.1.9"
 	}
 }

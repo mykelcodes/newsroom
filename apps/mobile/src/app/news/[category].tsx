@@ -2,7 +2,7 @@ import { FullscreenLoader } from '#/components/FullscreenLoader';
 import { NewsCard } from '#/components/NewsCard';
 import { PAGINATION_LIMIT } from '#/lib/constants';
 import { openLink } from '#/lib/open-link';
-import { toTitleCase } from '#/lib/utils/string-utils';
+import { capitalize } from '#/lib/utils/string-utils';
 import { api } from '@newsroom/backend/api';
 import { usePaginatedQuery } from 'convex/react';
 import { useLocalSearchParams, useNavigation } from 'expo-router';
@@ -12,15 +12,15 @@ import { ActivityIndicator, FlatList } from 'react-native';
 export default function NewsByCategoryScreen() {
 	const { category } = useLocalSearchParams<{ category: string }>();
 	const { results, status, loadMore } = usePaginatedQuery(
-		api.headlines.getByCategory,
-		{ category },
+		api.headlines.getAll,
+		{ categoryCode: category },
 		{ initialNumItems: PAGINATION_LIMIT }
 	);
 
 	const navigation = useNavigation();
 	useLayoutEffect(() => {
-		navigation.setOptions({ headerTitle: toTitleCase(category) });
-	}, [category]);
+		navigation.setOptions({ headerTitle: capitalize(category) });
+	}, [category, navigation]);
 
 	if (status === 'LoadingFirstPage') {
 		return <FullscreenLoader />;

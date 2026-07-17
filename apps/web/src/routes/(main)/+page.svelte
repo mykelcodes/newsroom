@@ -31,6 +31,15 @@
 	let featuredArticle = $derived(latestArticlesQuery.data?.[0]);
 	let latestArticles = $derived(latestArticlesQuery.data?.slice(1) ?? []);
 
+	// The featured/latest block and the wider feed come from separate queries
+	// over the same ordered data, so drop overlap by id instead of assuming
+	// the first N entries line up.
+	let popularArticles = $derived.by(() => {
+		const latestIds = new Set((latestArticlesQuery.data ?? []).map((article) => article._id));
+
+		return (otherNewsQuery.data?.page ?? []).filter((article) => !latestIds.has(article._id));
+	});
+
 	let jsonLd = $derived.by(() => buildHomeJsonLd(latestArticlesQuery.data ?? [], featuredArticle));
 </script>
 
@@ -62,6 +71,5 @@
 	<Hero categories={categories.data} />
 	<FeaturedArticle article={featuredArticle} articles={latestArticles} />
 	<EditorialBand />
-	<!-- <VideoGrid {videos} /> -->
-	<PopularNews articles={otherNewsQuery.data?.page.slice(4) ?? []} />
+	<PopularNews articles={popularArticles} />
 </main>

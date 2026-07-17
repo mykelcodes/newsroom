@@ -2,56 +2,74 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { api } from '@newsroom/backend/api';
-	import type { Doc } from '@newsroom/backend/dataModel';
 	import ArticleCard from '$lib/components/newsroom/ArticleCard.svelte';
 	import { siteMeta, siteUrl } from '$lib/seo';
-	import { useQuery } from 'convex-svelte';
+	import { useConvexClient, useQuery } from 'convex-svelte';
 	import { untrack } from 'svelte';
 	import type { PageProps } from './$types';
 
+	const PAGE_SIZE = 20;
+
 	let { data }: PageProps = $props();
 
-	const category = $derived(page.url.searchParams.get('category') || undefined);
-	let continueCursor = $state<string | null>(null);
-	let articles = $state<Doc<'headlines'>[]>([]);
+	const client = useConvexClient();
+	const category = $derived(
+		page.url.searchParams.get('category')?.trim().toLowerCase() || undefined
+	);
 
-	const articlesQuery = $derived(
+	// The first page is a live query; "Load more" appends further pages
+	// fetched imperatively, so nothing has to reconcile overlapping reactive
+	// results.
+	const firstPageQuery = $derived(
 		useQuery(
 			api.headlines.getAll,
-			{ paginationOpts: { numItems: 20, cursor: continueCursor }, categoryCode: category },
+			{ paginationOpts: { numItems: PAGE_SIZE, cursor: null }, categoryCode: category },
 			{ initialData: untrack(() => data.articles) }
 		)
 	);
 
-	let hasMore = $derived(articlesQuery.data?.isDone !== true);
+	let extraPages = $state<(typeof data.articles)[]>([]);
+	let loadingMore = $state(false);
 
 	$effect(() => {
-		resetArticles(category);
+		void category;
+		extraPages = [];
 	});
 
-	function resetArticles(categoryKey?: string) {
-		if (categoryKey === '') return;
+	const articles = $derived.by(() => {
+		// New headlines shift page boundaries, so the live first page can
+		// overlap already-loaded pages; keep the first occurrence of each id.
+		const merged = [firstPageQuery.data, ...extraPages].flatMap(
+			(pageResult) => pageResult?.page ?? []
+		);
 
-		continueCursor = null;
-		articles = [];
-	}
+		return merged.filter(
+			(article, index) => merged.findIndex((other) => other._id === article._id) === index
+		);
+	});
 
-	$effect(() => {
-		const page = articlesQuery.data?.page;
+	const lastPage = $derived(extraPages.at(-1) ?? firstPageQuery.data);
+	const hasMore = $derived(lastPage ? !lastPage.isDone : false);
 
-		if (!page) return;
+	async function loadMore() {
+		if (!lastPage || lastPage.isDone || loadingMore) return;
 
-		if (continueCursor === null) {
-			articles = page;
-			return;
+		const requestedCategory = category;
+		loadingMore = true;
+
+		try {
+			const nextPage = await client.query(api.headlines.getAll, {
+				paginationOpts: { numItems: PAGE_SIZE, cursor: lastPage.continueCursor },
+				categoryCode: requestedCategory
+			});
+
+			if (requestedCategory === category) {
+				extraPages.push(nextPage);
+			}
+		} finally {
+			loadingMore = false;
 		}
-
-		const currentArticles = untrack(() => articles);
-		articles = [
-			...currentArticles,
-			...page.filter((article) => !currentArticles.some((a) => a._id === article._id))
-		];
-	});
+	}
 </script>
 
 <svelte:head>
@@ -118,11 +136,8 @@
 
 			{#if hasMore}
 				<div class="load-more">
-					<button
-						type="button"
-						onclick={() => (continueCursor = articlesQuery.data?.continueCursor || null)}
-					>
-						Load more
+					<button type="button" disabled={loadingMore} onclick={loadMore}>
+						{loadingMore ? 'Loading…' : 'Load more'}
 					</button>
 				</div>
 			{/if}

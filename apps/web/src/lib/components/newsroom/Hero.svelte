@@ -1,5 +1,9 @@
 <script lang="ts">
-	let { categories } = $props();
+	type Props = {
+		categories?: Array<{ code: string; name: string }>;
+	};
+
+	let { categories = [] }: Props = $props();
 
 	const images = [
 		{ className: 'center', src: '/newsroom/hero-main.jpg' },

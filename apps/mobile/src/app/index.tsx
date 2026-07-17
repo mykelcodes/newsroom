@@ -6,6 +6,7 @@ import { openLink } from '#/lib/open-link';
 import { api } from '@newsroom/backend/api';
 import { Doc } from '@newsroom/backend/dataModel';
 import { usePaginatedQuery, useQuery } from 'convex/react';
+import { FunctionReturnType } from 'convex/server';
 import { router } from 'expo-router';
 import { ActivityIndicator, FlatList, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,7 +52,7 @@ const HeaderComponent = ({
 	categories
 }: {
 	headline?: Doc<'headlines'>;
-	categories?: Doc<'categories'>[];
+	categories?: FunctionReturnType<typeof api.categories.getAll>;
 }) => {
 	return (
 		<View className="android:pb-0 pb-4">
