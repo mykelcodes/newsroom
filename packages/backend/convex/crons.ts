@@ -7,13 +7,22 @@ if (process.env.RUN_GNEWS_CRON === 'true') {
 	crons.interval(
 		'fetch latest GNews headlines',
 		{ minutes: 15 },
-		internal.newsScheduler.enqueueNextFetchJob
+		internal.newsScheduler.enqueueNextFetchJob,
+		{}
 	);
 
 	crons.interval(
 		'retry failed GNews fetch jobs',
 		{ minutes: 5 },
-		internal.newsScheduler.retryFailedJob
+		internal.newsScheduler.retryFailedJob,
+		{}
+	);
+
+	crons.interval(
+		'clean up old fetch jobs',
+		{ hours: 24 },
+		internal.newsScheduler.cleanupOldJobs,
+		{}
 	);
 }
 

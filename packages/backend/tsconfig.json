@@ -8,6 +8,7 @@
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"resolveJsonModule": true,
+		"types": ["node", "vite/client"],
 		"allowJs": true,
 		"isolatedModules": true,
 		"noEmit": true
