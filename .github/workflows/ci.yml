@@ -24,6 +24,11 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      # wrangler types includes vars from .env.local in the generated Env,
+      # so the check only matches the committed file if the same var names exist
+      - name: Create web env file
+        run: cp apps/web/.env.example apps/web/.env.local
+
       - name: Typecheck
         run: pnpm check
 
